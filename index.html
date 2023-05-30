@@ -133,46 +133,42 @@
             <section class="carbonfootprint section-padding" id="section_3">
                 <div class="container">
                     <div class="row">
-
                         <div class="col-lg-12 col-12 mx-auto">
                             <div class="section-title-wrap d-flex justify-content-center align-items-center mb-5">
                                 <img src="images/climatechange3.jpg" class="avatar-image img-fluid" style="width: 9%; height: 9%;" alt="">
-
                                 <h2 class="text-white ms-4 mb-0">Today's Meal</h2>
                             </div>
-
                             <div id="todaysmeallistdiv" class="row pt-lg-5 justify-content-center">
-
-
                                 <div id="waitingtodaysmeal" class="spinner-border" style="width: 5rem; height: 5rem;" role="status">
                                     <span class="sr-only"></span>
-                                  </div>
-                                  
-    
-
-                               
-
-                               
+                                </div>
+                            </div>
+                            <div class="alert alert-warning alert-dismissible fade show text-center" role="alert" style="background-color: #ffd54f; color: #333333;">
+                                 These carbon footprint calculations are pre-estimated and may not reflect real data.
+                            </div>
+                            
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
+            <div id="recycleStationsModal" class="modal fade">
+                <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title" id="stationModalLabel">Recycle Station Details</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
+                      <h5 class="modal-title">Recycle Stations</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                      <img id="modalImage" src="" alt="" style="width: 100%;">
-                      <p id="modalDetails"></p>
+                    <div class="modal-body" id="modalBody">
+                      <!-- Recycle stations will be dynamically added here -->
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                   </div>
                 </div>
               </div>
-
+              
 
             <section class="wheretorecycle section-padding" id="section_4">
                 <div class="container">
