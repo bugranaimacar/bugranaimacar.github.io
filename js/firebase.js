@@ -1,6 +1,7 @@
 async function getMeals() {
-    const todaysDate = new Date().toISOString().slice(0, 10);
-    const url = `https://climate-change-in-tedu-campus-default-rtdb.europe-west1.firebasedatabase.app/meals.json?orderBy="Date"&equalTo="${todaysDate}"`;
+  const now = new Date();
+  const gmt3 = new Date(now.getTime() + (3 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+      const url = `https://climate-change-in-tedu-campus-default-rtdb.europe-west1.firebasedatabase.app/meals.json?orderBy="Date"&equalTo="${gmt3}"`;
   
     try {
       const response = await fetch(url);
