@@ -215,6 +215,8 @@
       gap:10px;
       min-height:180px;
       animation:slideIn 0.5s ease-out backwards;
+      touch-action:none;
+      user-select:none;
     }
   .card:nth-child(1) {animation-delay:0.1s;}
   .card:nth-child(2) {animation-delay:0.15s;}
@@ -249,12 +251,23 @@
   .card:hover .card-emoji {
     transform:scale(1.08);
   }
+  .card.pointer-dragging {
+    box-shadow:0 30px 60px rgba(37,99,235,0.35);
+    transform:scale(1.05);
+    cursor:grabbing;
+  }
+  .card-placeholder {
+    visibility:hidden;
+    border-radius:18px;
+  }
   .card p {
     margin:6px 0 0 0;
-    font-size:15px;
-    color:#1e293b;
-    font-weight:500;
-    line-height:1.4;
+    font-size:16px;
+    color:#0f172a;
+    font-weight:600;
+    line-height:1.55;
+    letter-spacing:0.2px;
+    padding:0 4px;
   }
   #reset {
     background:linear-gradient(135deg,#3b82f6,#2563eb);
@@ -416,6 +429,10 @@
       padding:20px 16px;
       min-height:160px;
     }
+    .card p {
+      font-size:15px;
+      line-height:1.5;
+    }
     #cards {
       grid-template-columns:minmax(180px,1fr);
     }
@@ -478,6 +495,10 @@
     }
     .card-emoji {
       font-size:74px;
+    }
+    .card p {
+      font-size:18px;
+      line-height:1.6;
     }
     #reset {
       font-size:20px;
@@ -553,7 +574,9 @@ const progressLabel=document.getElementById('progressLabel');
 const completionOverlay=document.getElementById('completionOverlay');
 const playAgainBtn=document.getElementById('playAgain');
 const tipCard=document.getElementById('tipCard');
+const dropZones=[doZone,dontZone];
 let draggedCard=null;
+let pointerDrag=null;
 let placedCount=0;
 const totalCards=questions.length;
 
@@ -615,18 +638,159 @@ function createCards(){
     c.className='card';
     c.draggable=true;
   c.dataset.answer=q.answer;
-  const label = q.iconLabel || q.text;
-  c.innerHTML=`<div class="card-emoji" role="img" aria-label="${label}">${q.icon}</div><p>${q.text}</p>`;
+    const label = q.iconLabel || q.text;
+    c.innerHTML=`<div class="card-emoji" role="img" aria-label="${label}">${q.icon}</div><p>${q.text}</p>`;
     c.addEventListener('dragstart',dragStart);
     c.addEventListener('dragend',()=>{
       if(draggedCard) draggedCard.style.opacity = '1';
       draggedCard=null;
     });
+    c.addEventListener('pointerdown',handlePointerDown);
     cardContainer.appendChild(c);
   }
   placedCount=0;
   updateProgress();
   completionOverlay.classList.remove('active');
+}
+
+function handlePointerDown(e){
+  const card=e.currentTarget;
+  if(card.draggable===false) return;
+  if(pointerDrag || e.pointerType==='mouse') return;
+  e.preventDefault();
+  startPointerDrag(card,e);
+}
+
+function startPointerDrag(card,e){
+  playPickupSound();
+  const rect=card.getBoundingClientRect();
+  const placeholder=document.createElement('div');
+  placeholder.className='card-placeholder';
+  placeholder.style.width=`${rect.width}px`;
+  placeholder.style.height=`${rect.height}px`;
+  const parent=card.parentElement;
+  parent.insertBefore(placeholder,card);
+
+  pointerDrag={
+    card,
+    placeholder,
+    pointerId:e.pointerId,
+    offsetX:e.clientX-rect.left,
+    offsetY:e.clientY-rect.top,
+    startParent:parent,
+    currentZone:null
+  };
+
+  card.classList.add('pointer-dragging');
+  card.style.width=`${rect.width}px`;
+  card.style.height=`${rect.height}px`;
+  card.style.position='fixed';
+  card.style.left=`${rect.left}px`;
+  card.style.top=`${rect.top}px`;
+  card.style.zIndex='1500';
+  card.style.pointerEvents='none';
+  card.style.transition='none';
+  card.style.transform='none';
+  card.style.opacity='0.85';
+  document.body.appendChild(card);
+  card.setPointerCapture(e.pointerId);
+
+  window.addEventListener('pointermove',handlePointerMove);
+  window.addEventListener('pointerup',handlePointerUp);
+  window.addEventListener('pointercancel',cancelPointerDrag);
+}
+
+function handlePointerMove(e){
+  if(!pointerDrag || e.pointerId!==pointerDrag.pointerId) return;
+  const {card,offsetX,offsetY}=pointerDrag;
+  const x=e.clientX-offsetX;
+  const y=e.clientY-offsetY;
+  card.style.left=`${x}px`;
+  card.style.top=`${y}px`;
+
+  let targetZone=null;
+  for(const zone of dropZones){
+    const rect=zone.getBoundingClientRect();
+    const inside=e.clientX>=rect.left && e.clientX<=rect.right && e.clientY>=rect.top && e.clientY<=rect.bottom;
+    if(inside){
+      targetZone=zone;
+    }
+    zone.classList.toggle('drag-over',zone===targetZone);
+  }
+  pointerDrag.currentZone=targetZone;
+}
+
+function handlePointerUp(e){
+  if(!pointerDrag || e.pointerId!==pointerDrag.pointerId) return;
+  const {card,placeholder,currentZone}=pointerDrag;
+
+  try {card.releasePointerCapture(e.pointerId);} catch(err) { /* ignore */ }
+  dropZones.forEach(zone=>zone.classList.remove('drag-over'));
+
+  if(placeholder && placeholder.parentNode){
+    placeholder.parentNode.replaceChild(card,placeholder);
+  } else if(pointerDrag.startParent){
+    pointerDrag.startParent.appendChild(card);
+  } else {
+    cardContainer.appendChild(card);
+  }
+  pointerDrag=null;
+  card.classList.remove('pointer-dragging');
+  card.style.position='';
+  card.style.left='';
+  card.style.top='';
+  card.style.zIndex='';
+  card.style.pointerEvents='';
+  card.style.transition='';
+  card.style.transform='';
+  card.style.width='';
+  card.style.height='';
+  card.style.opacity='1';
+
+  window.removeEventListener('pointermove',handlePointerMove);
+  window.removeEventListener('pointerup',handlePointerUp);
+  window.removeEventListener('pointercancel',cancelPointerDrag);
+
+  draggedCard=card;
+  if(currentZone){
+    handleCardDrop(card,currentZone);
+  }
+  draggedCard=null;
+}
+
+function cancelPointerDrag(e){
+  if(pointerDrag && e.pointerId===pointerDrag.pointerId){
+    handlePointerUp(e);
+  }
+}
+
+function forcePointerRelease(){
+  if(!pointerDrag) return;
+  const {card,placeholder,pointerId}=pointerDrag;
+  try {card.releasePointerCapture(pointerId);} catch(err) { /* ignore */ }
+  dropZones.forEach(zone=>zone.classList.remove('drag-over'));
+  if(placeholder && placeholder.parentNode){
+    placeholder.parentNode.replaceChild(card,placeholder);
+  } else if(pointerDrag.startParent){
+    pointerDrag.startParent.appendChild(card);
+  } else {
+    cardContainer.appendChild(card);
+  }
+  card.classList.remove('pointer-dragging');
+  card.style.position='';
+  card.style.left='';
+  card.style.top='';
+  card.style.zIndex='';
+  card.style.pointerEvents='';
+  card.style.transition='';
+  card.style.transform='';
+  card.style.width='';
+  card.style.height='';
+  card.style.opacity='1';
+  window.removeEventListener('pointermove',handlePointerMove);
+  window.removeEventListener('pointerup',handlePointerUp);
+  window.removeEventListener('pointercancel',cancelPointerDrag);
+  pointerDrag=null;
 }
 
 function dragStart(e){
@@ -655,26 +819,35 @@ function dragLeave(e) {
 function drop(e, zone){
   e.preventDefault();
   zone.classList.remove('drag-over');
-  
-  const draggedAnswer = e.dataTransfer.getData('text/plain');
   if(!draggedCard) return;
-  
   draggedCard.style.opacity = '1';
+  handleCardDrop(draggedCard, zone);
+  draggedCard=null;
+}
+
+function handleCardDrop(card, zone){
+  if(!card) return;
+  const draggedAnswer = card.dataset.answer;
   const correctZone = (draggedAnswer==='do') ? doZone : dontZone;
 
   if(zone === correctZone){
     // Correct answer
+    if(card._returnTimeout){
+      clearTimeout(card._returnTimeout);
+      card._returnTimeout=null;
+    }
     playCorrectSound();
-    draggedCard.style.border='4px solid #22c55e';
-    draggedCard.style.background='linear-gradient(135deg,#bbf7d0,#86efac)';
-    draggedCard.classList.remove('wrong', 'shake');
-    draggedCard.classList.add('correct');
+    card.style.border='4px solid #22c55e';
+    card.style.background='linear-gradient(135deg,#bbf7d0,#86efac)';
+    card.classList.remove('wrong', 'shake');
+    card.classList.add('correct');
     message.textContent='✅ Great job! That is correct!';
     message.style.color='#16a34a';
-    zone.appendChild(draggedCard);
-    draggedCard.draggable=false;
-    draggedCard.style.cursor='default';
-    draggedCard.removeEventListener('dragstart',dragStart);
+    zone.appendChild(card);
+    card.draggable=false;
+    card.style.cursor='default';
+    card.removeEventListener('dragstart',dragStart);
+    card.removeEventListener('pointerdown',handlePointerDown);
     placedCount=Math.min(totalCards, placedCount+1);
     updateProgress();
     tipCard.innerHTML='🌟 <span>Nice! Keep matching the remaining cards.</span>';
@@ -692,26 +865,31 @@ function drop(e, zone){
     }
   } else {
     // Wrong answer
+    if(card._returnTimeout){
+      clearTimeout(card._returnTimeout);
+    }
     playWrongSound();
-    draggedCard.style.border='4px solid #ef4444';
-    draggedCard.style.background='linear-gradient(135deg,#fecaca,#fca5a5)';
-    draggedCard.classList.remove('correct');
-    draggedCard.classList.add('wrong', 'shake');
+    card.style.border='4px solid #ef4444';
+    card.style.background='linear-gradient(135deg,#fecaca,#fca5a5)';
+    card.classList.remove('correct');
+    card.classList.add('wrong', 'shake');
     message.textContent='❌ Try again! Move it to the right zone!';
     message.style.color='#dc2626';
     tipCard.innerHTML='🚫 <span>No worries! Place it in the other zone.</span>';
     
-    setTimeout(()=>{
-      draggedCard.style.border='';
-      draggedCard.style.background='';
-      draggedCard.classList.remove('wrong', 'shake');
-      cardContainer.appendChild(draggedCard);
+    card._returnTimeout=setTimeout(()=>{
+      card.style.border='';
+      card.style.background='';
+      card.classList.remove('wrong', 'shake');
+      if(cardContainer.contains(card)===false){
+        cardContainer.appendChild(card);
+      }
       message.textContent='';
       message.style.color='#0f172a';
       tipCard.innerHTML='✨ <span>Try another card or give it another go.</span>';
+      card._returnTimeout=null;
     },1200);
   }
-  draggedCard=null;
 }
 
 doZone.addEventListener('dragover',dragOver);
@@ -724,6 +902,7 @@ dontZone.addEventListener('drop',e=>drop(e,dontZone));
 
 function resetGame(){
   playPickupSound();
+  forcePointerRelease();
   doZone.innerHTML='<h2>✅ DO<span>Positive digital habits</span></h2>';
   dontZone.innerHTML='<h2>❌ DON\'T<span>Keep the lab safe</span></h2>';
   message.textContent='';
