@@ -198,9 +198,12 @@
   }
   .dropzone h2 span {
     display:block;
-    font-size:0.6em;
-    font-weight:500;
-    color:#64748b;
+    font-size:0.65em;
+    font-weight:600;
+    color:#1e293b;
+    margin-top:4px;
+    text-shadow:0 1px 2px rgba(0,0,0,0.1);
+    letter-spacing:0.3px;
   }
   .card {
       background:linear-gradient(145deg,rgba(248,250,252,0.96),rgba(224,242,254,0.92));
@@ -389,6 +392,216 @@
   .overlay-button:active {
     transform:translateY(0);
   }
+  
+  /* Settings Button */
+  #settingsBtn {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:linear-gradient(135deg,#8b5cf6,#7c3aed);
+    color:white;
+    border:none;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    font-size:24px;
+    cursor:pointer;
+    box-shadow:0 4px 15px rgba(139,92,246,0.4);
+    transition:all 0.3s ease;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #settingsBtn:hover {
+    transform:scale(1.1) rotate(45deg);
+    box-shadow:0 6px 20px rgba(139,92,246,0.6);
+  }
+  
+  /* Settings Modal */
+  #settingsModal {
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.7);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity 0.3s ease;
+    z-index:1001;
+  }
+  #settingsModal.active {
+    visibility:visible;
+    opacity:1;
+  }
+  .settings-content {
+    background:white;
+    padding:32px;
+    border-radius:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    max-width:500px;
+    width:90%;
+    max-height:80vh;
+    overflow-y:auto;
+  }
+  .settings-content h2 {
+    margin:0 0 24px 0;
+    color:#1e293b;
+    font-size:1.8em;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .settings-group {
+    margin-bottom:24px;
+  }
+  .settings-group label {
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-weight:600;
+    font-size:0.95em;
+  }
+  .settings-group select,
+  .settings-group input[type="range"] {
+    width:100%;
+    padding:10px;
+    border:2px solid #e2e8f0;
+    border-radius:12px;
+    font-size:16px;
+    transition:border-color 0.2s ease;
+  }
+  .settings-group select:focus,
+  .settings-group input[type="range"]:focus {
+    outline:none;
+    border-color:#8b5cf6;
+  }
+  .settings-group input[type="range"] {
+    padding:0;
+    height:40px;
+  }
+  .range-value {
+    display:inline-block;
+    margin-left:12px;
+    color:#8b5cf6;
+    font-weight:700;
+    font-size:1.1em;
+  }
+  .checkbox-group {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .checkbox-group input[type="checkbox"] {
+    width:24px;
+    height:24px;
+    cursor:pointer;
+  }
+  .checkbox-group label {
+    margin:0;
+    cursor:pointer;
+  }
+  .settings-buttons {
+    display:flex;
+    gap:12px;
+    margin-top:28px;
+  }
+  .settings-buttons button {
+    flex:1;
+    padding:12px 20px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .btn-save {
+    background:linear-gradient(135deg,#8b5cf6,#7c3aed);
+    color:white;
+    box-shadow:0 4px 12px rgba(139,92,246,0.3);
+  }
+  .btn-save:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(139,92,246,0.4);
+  }
+  .btn-cancel {
+    background:#e2e8f0;
+    color:#475569;
+  }
+  .btn-cancel:hover {
+    background:#cbd5e1;
+  }
+  
+  /* Font Size Classes */
+  .font-small {
+    font-size:14px;
+  }
+  .font-small .card p {
+    font-size:14px;
+  }
+  .font-small .card-emoji {
+    font-size:48px;
+  }
+  .font-large {
+    font-size:18px;
+  }
+  .font-large .card p {
+    font-size:18px;
+  }
+  .font-large .card-emoji {
+    font-size:72px;
+  }
+  .font-xlarge {
+    font-size:20px;
+  }
+  .font-xlarge .card p {
+    font-size:20px;
+  }
+  .font-xlarge .card-emoji {
+    font-size:80px;
+  }
+  
+  /* Card Size Classes */
+  .cards-small .card {
+    max-width:200px;
+    min-height:150px;
+    padding:16px 14px;
+  }
+  .cards-small .dropzone .card {
+    max-width:160px;
+    min-height:120px;
+  }
+  .cards-large .card {
+    max-width:300px;
+    min-height:220px;
+    padding:28px 22px;
+  }
+  .cards-large .dropzone .card {
+    max-width:240px;
+    min-height:180px;
+  }
+  
+  /* High Contrast Mode */
+  .high-contrast {
+    filter:contrast(1.2);
+  }
+  .high-contrast .card {
+    border:3px solid #1e293b;
+  }
+  .high-contrast .dropzone {
+    border-width:5px;
+    border-color:#1e293b;
+  }
+  
+  /* Reduce Motion */
+  .reduce-motion * {
+    animation-duration:0.01s !important;
+    transition-duration:0.01s !important;
+  }
+  
   @media (max-width:1024px) {
     .dropzone {
       min-height:240px;
@@ -421,10 +634,13 @@
     .container {
       flex-direction:column;
       gap:18px;
+      align-items:center;
     }
     .dropzone {
       min-height:220px;
       grid-template-columns:repeat(3,1fr);
+      width:100%;
+      max-width:600px;
     }
     #cards {
       grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -437,10 +653,23 @@
     .info-card {
       font-size:0.9em;
     }
+    #settingsBtn {
+      width:45px;
+      height:45px;
+      font-size:20px;
+      top:15px;
+      right:15px;
+    }
+    .settings-content {
+      padding:24px;
+    }
     .dropzone {
       padding:16px 14px 24px;
       border-width:3px;
       grid-template-columns:repeat(2,1fr);
+      width:100%;
+      max-width:500px;
+      margin:0 auto;
     }
     .dropzone h2 {
       font-size:1.4em;
@@ -535,6 +764,62 @@
 </style>
 </head>
 <body>
+<!-- Settings Button -->
+<button id="settingsBtn" aria-label="Open settings">⚙️</button>
+
+<!-- Settings Modal -->
+<div id="settingsModal">
+  <div class="settings-content">
+    <h2>⚙️ Accessibility Settings</h2>
+    
+    <div class="settings-group">
+      <label for="maxWidth">Maximum Width</label>
+      <input type="range" id="maxWidth" min="1200" max="2400" step="100" value="1800">
+      <span class="range-value" id="maxWidthValue">1800px</span>
+    </div>
+    
+    <div class="settings-group">
+      <label for="fontSize">Font Size</label>
+      <select id="fontSize">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium (Default)</option>
+        <option value="large">Large</option>
+        <option value="xlarge">Extra Large</option>
+      </select>
+    </div>
+    
+    <div class="settings-group">
+      <label for="cardSize">Card Size</label>
+      <select id="cardSize">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium (Default)</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+    
+    <div class="settings-group">
+      <label>Display Options</label>
+      <div class="checkbox-group">
+        <input type="checkbox" id="highContrast">
+        <label for="highContrast">High Contrast Mode</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="reduceMotion">
+        <label for="reduceMotion">Reduce Animations</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="soundEnabled" checked>
+        <label for="soundEnabled">Enable Sound Effects</label>
+      </div>
+    </div>
+    
+    <div class="settings-buttons">
+      <button class="btn-cancel" id="cancelSettings">Cancel</button>
+      <button class="btn-save" id="saveSettings">Save Settings</button>
+    </div>
+  </div>
+</div>
+
 <h1>🎮 Drag the cards to the correct zone — DO ✅ or DON'T ❌<span>Match the ICT room habits to the correct side!</span></h1>
 <div class="top-bar">
   <div class="info-card" id="tipCard">✨ <span>Start dragging a card to begin.</span></div>
@@ -577,13 +862,18 @@ const questions = [
   {text:'Keep your desk clean and tidy.',icon:'🧹',iconLabel:'Broom icon for tidying up',answer:'do'},
   {text:'Change computer settings without permission.',icon:'⚙️',iconLabel:'Gear representing computer settings',answer:'dont'},
   {text:'Ask for help when you need it.',icon:'🙋‍♀️',iconLabel:'Student raising hand for help',answer:'do'},
-  {text:'Use someone else’s computer without asking.',icon:'💻',iconLabel:'Laptop showing using someone else’s device',answer:'dont'},
+  {text:'Use someone else\'s computer without asking.',icon:'💻',iconLabel:'Laptop showing using someone else\'s device',answer:'dont'},
   {text:'Listen carefully to the teacher.',icon:'👂',iconLabel:'Ear symbol for careful listening',answer:'do'},
   {text:'Pull the mouse cable hard.',icon:'🖱️',iconLabel:'Computer mouse representing rough handling',answer:'dont'},
   {text:'Visit safe educational websites.',icon:'🌐',iconLabel:'Globe with meridians for safe web browsing',answer:'do'},
   {text:'Use bad words online.',icon:'🚫',iconLabel:'Prohibited symbol for bad language',answer:'dont'},
   {text:'Log off when finished.',icon:'📴',iconLabel:'Power button for logging off',answer:'do'},
-  {text:'Leave your chair messy.',icon:'🪑',iconLabel:'Chair icon for leaving seat untidy',answer:'dont'}
+  {text:'Leave your chair messy.',icon:'🪑',iconLabel:'Chair icon for leaving seat untidy',answer:'dont'},
+  {text:'Save your work regularly.',icon:'💾',iconLabel:'Floppy disk icon for saving work',answer:'do'},
+  {text:'Download files without permission.',icon:'⬇️',iconLabel:'Download arrow for unauthorized downloads',answer:'dont'},
+  {text:'Report cyberbullying to an adult.',icon:'🛡️',iconLabel:'Shield icon for reporting issues',answer:'do'},
+  {text:'Click on suspicious links.',icon:'⚠️',iconLabel:'Warning sign for dangerous links',answer:'dont'},
+  {text:'Use headphones at low volume.',icon:'🎧',iconLabel:'Headphones for respectful listening',answer:'do'}
 ];
 
 const cardContainer=document.getElementById('cards');
@@ -601,11 +891,144 @@ let pointerDrag=null;
 let placedCount=0;
 const totalCards=questions.length;
 
+// Settings elements
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const saveSettingsBtn = document.getElementById('saveSettings');
+const cancelSettingsBtn = document.getElementById('cancelSettings');
+const maxWidthInput = document.getElementById('maxWidth');
+const maxWidthValue = document.getElementById('maxWidthValue');
+const fontSizeSelect = document.getElementById('fontSize');
+const cardSizeSelect = document.getElementById('cardSize');
+const highContrastCheck = document.getElementById('highContrast');
+const reduceMotionCheck = document.getElementById('reduceMotion');
+const soundEnabledCheck = document.getElementById('soundEnabled');
+
+// Default settings
+const defaultSettings = {
+  maxWidth: 1800,
+  fontSize: 'medium',
+  cardSize: 'medium',
+  highContrast: false,
+  reduceMotion: false,
+  soundEnabled: true
+};
+
+// Load settings from localStorage
+function loadSettings() {
+  const saved = localStorage.getItem('gameSettings');
+  return saved ? JSON.parse(saved) : defaultSettings;
+}
+
+// Save settings to localStorage
+function saveSettings(settings) {
+  localStorage.setItem('gameSettings', JSON.stringify(settings));
+}
+
+// Apply settings to the page
+function applySettings(settings) {
+  // Apply max width
+  const topBar = document.querySelector('.top-bar');
+  const stage = document.querySelector('.stage');
+  if (topBar) topBar.style.maxWidth = settings.maxWidth + 'px';
+  if (stage) stage.style.maxWidth = settings.maxWidth + 'px';
+  
+  // Apply font size
+  document.body.classList.remove('font-small', 'font-medium', 'font-large', 'font-xlarge');
+  document.body.classList.add('font-' + settings.fontSize);
+  
+  // Apply card size
+  document.body.classList.remove('cards-small', 'cards-medium', 'cards-large');
+  document.body.classList.add('cards-' + settings.cardSize);
+  
+  // Apply high contrast
+  if (settings.highContrast) {
+    document.body.classList.add('high-contrast');
+  } else {
+    document.body.classList.remove('high-contrast');
+  }
+  
+  // Apply reduce motion
+  if (settings.reduceMotion) {
+    document.body.classList.add('reduce-motion');
+  } else {
+    document.body.classList.remove('reduce-motion');
+  }
+  
+  // Store sound setting
+  window.soundEnabled = settings.soundEnabled;
+}
+
+// Update settings UI
+function updateSettingsUI(settings) {
+  maxWidthInput.value = settings.maxWidth;
+  maxWidthValue.textContent = settings.maxWidth + 'px';
+  fontSizeSelect.value = settings.fontSize;
+  cardSizeSelect.value = settings.cardSize;
+  highContrastCheck.checked = settings.highContrast;
+  reduceMotionCheck.checked = settings.reduceMotion;
+  soundEnabledCheck.checked = settings.soundEnabled;
+}
+
+// Initialize settings on page load
+const currentSettings = loadSettings();
+applySettings(currentSettings);
+updateSettingsUI(currentSettings);
+
+// Settings button click
+settingsBtn.addEventListener('click', () => {
+  settingsModal.classList.add('active');
+  updateSettingsUI(loadSettings());
+});
+
+// Cancel button click
+cancelSettingsBtn.addEventListener('click', () => {
+  settingsModal.classList.remove('active');
+});
+
+// Close modal on background click
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) {
+    settingsModal.classList.remove('active');
+  }
+});
+
+// Update max width value display
+maxWidthInput.addEventListener('input', () => {
+  maxWidthValue.textContent = maxWidthInput.value + 'px';
+});
+
+// Save button click
+saveSettingsBtn.addEventListener('click', () => {
+  const newSettings = {
+    maxWidth: parseInt(maxWidthInput.value),
+    fontSize: fontSizeSelect.value,
+    cardSize: cardSizeSelect.value,
+    highContrast: highContrastCheck.checked,
+    reduceMotion: reduceMotionCheck.checked,
+    soundEnabled: soundEnabledCheck.checked
+  };
+  
+  saveSettings(newSettings);
+  applySettings(newSettings);
+  settingsModal.classList.remove('active');
+  
+  // Show confirmation message
+  message.textContent = '✅ Settings saved successfully!';
+  message.style.color = '#16a34a';
+  setTimeout(() => {
+    message.textContent = '';
+  }, 2000);
+});
+
 // Audio context for sound effects
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
+window.soundEnabled = true;
 
 function playSound(frequency, duration, type = 'sine') {
+  if (!window.soundEnabled) return;
+  
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
