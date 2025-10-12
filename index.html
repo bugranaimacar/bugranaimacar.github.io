@@ -86,10 +86,12 @@
     align-items:stretch;
     gap:18px;
     margin:28px auto 10px;
-    width:min(90vw,1400px);
+    width:95%;
+    max-width:1800px;
   }
   .stage {
-    width:min(90vw,1400px);
+    width:95%;
+    max-width:1800px;
     display:flex;
     flex-direction:column;
     align-items:stretch;
@@ -115,11 +117,13 @@
     color:#2563eb;
   }
   .progress-wrapper {
-    flex:1 1 260px;
-    min-width:240px;
+    width:95%;
+    max-width:600px;
+    margin:20px auto;
+    text-align:center;
   }
   .progress-track {
-    height:16px;
+    height:24px;
     border-radius:999px;
     background:rgba(148,163,184,0.3);
     overflow:hidden;
@@ -133,9 +137,11 @@
     transition:width 0.4s ease;
   }
   .progress-label {
-    margin-top:6px;
+    margin-top:10px;
     font-weight:600;
+    font-size:1.1em;
     color:#0f172a;
+    text-align:center;
   }
   .container {
     display:flex;
@@ -157,10 +163,10 @@
     transition:all 0.3s ease;
     position:relative;
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-    grid-auto-rows:minmax(160px,auto);
+    grid-template-columns:repeat(4,1fr);
+    grid-auto-rows:minmax(120px,auto);
     grid-auto-flow:row dense;
-    gap:20px;
+    gap:10px;
     align-content:start;
     overflow-y:auto;
     animation:fadeIn 0.8s ease-out;
@@ -239,6 +245,18 @@
   }
   .card.wrong {
     animation:shake 0.5s ease, glowRed 1s ease 2;
+  }
+  .dropzone .card {
+    max-width:200px;
+    padding:16px 14px;
+    min-height:140px;
+    transform:scale(0.9);
+  }
+  .dropzone .card .card-emoji {
+    font-size:48px;
+  }
+  .dropzone .card p {
+    font-size:0.9em;
   }
   .card-emoji {
     font-size:62px;
@@ -406,6 +424,7 @@
     }
     .dropzone {
       min-height:220px;
+      grid-template-columns:repeat(3,1fr);
     }
     #cards {
       grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -421,6 +440,7 @@
     .dropzone {
       padding:16px 14px 24px;
       border-width:3px;
+      grid-template-columns:repeat(2,1fr);
     }
     .dropzone h2 {
       font-size:1.4em;
@@ -482,7 +502,7 @@
     }
     .dropzone {
       min-height:320px;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      grid-template-columns:repeat(4,1fr);
       padding:24px 22px 34px;
     }
     .stage {
@@ -515,13 +535,14 @@
 </style>
 </head>
 <body>
-<h1>🎮 Drag the cards to the correct zone — DO ✅ or DON’T ❌<span>Match the ICT room habits to the correct side to earn your badge!</span></h1>
+<h1>🎮 Drag the cards to the correct zone — DO ✅ or DON'T ❌<span>Match the ICT room habits to the correct side!</span></h1>
 <div class="top-bar">
   <div class="info-card" id="tipCard">✨ <span>Start dragging a card to begin.</span></div>
   <div class="info-card"><strong>Goal</strong><span>Sort every card into the best behaviour zone.</span></div>
-  <div class="progress-wrapper">
-    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-label" id="progressLabel">0 of 20 sorted</div>
+</div>
+<div class="progress-wrapper">
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-label" id="progressLabel">0 of 20 sorted</div>
   </div>
 </div>
 <div id="message"></div>
