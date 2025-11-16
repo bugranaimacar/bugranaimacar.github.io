@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Quiz Game</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tone.js for audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* Custom styles for the game */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        /* Apply base font size from CSS variable for scaling */
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: var(--base-font-size, 1rem); /* Default 16px */
+            transition: font-size 0.2s ease-in-out;
+        }
+
+        /* Main container width transition */
+        #main-container {
+            transition: max-width 0.3s ease-in-out;
+        }
+
+        /* Accessibility focus style */
+        button:focus-visible, [role="button"]:focus-visible {
+            outline: 4px solid #3b82f6;
+            outline-offset: 2px;
+            border-radius: 0.5rem; /* 8px */
+        }
+
+        /* Screen-reader only element */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Style for the settings modal button group */
+        .settings-control-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #D1D5DB; /* gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            overflow: hidden;
+        }
+        .settings-control-group button {
+            padding: 0.5rem; /* p-2 */
+            background-color: #F9FAFB; /* gray-50 */
+            color: #374151; /* gray-700 */
+            font-size: 1.25rem; /* text-xl */
+            line-height: 1.25rem;
+            font-weight: 600;
+        }
+        .settings-control-group button:not(:last-child) {
+            border-right: 1px solid #D1D5DB; /* gray-300 */
+        }
+        .settings-control-group button:hover {
+            background-color: #F3F4F6; /* gray-100 */
+        }
+        .settings-control-group button:focus-visible {
+           border-radius: 0;
+           outline-offset: -2px;
+        }
+        .settings-control-group button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Quiz Option Button Styles */
+        .option-btn {
+            border: 3px solid #e5e7eb; /* gray-200 */
+            background-color: #f9fafb; /* gray-50 */
+            color: #1f2937; /* gray-800 */
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn:hover {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+        }
+        /* Correct answer style */
+        .option-btn.correct {
+            border-color: #22c55e; /* green-500 */
+            background-color: #f0fdf4; /* green-50 */
+            color: #166534; /* green-800 */
+        }
+        /* Wrong answer style */
+        .option-btn.wrong {
+            border-color: #ef4444; /* red-500 */
+            background-color: #fef2f2; /* red-50 */
+            color: #991b1b; /* red-800 */
+        }
+        /* Disabled state for options after answer */
+        .option-btn:disabled {
+            /* opacity: 0.9; */ /* Opaklığı 1'e ayarlayarak yanlışların soluk görünmesini engelliyoruz */
+            cursor: not-allowed;
+        }
+        .option-btn.correct:disabled, .option-btn.wrong:disabled {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Game Container -->
+    <div id="main-container" class="bg-white w-full max-w-5xl rounded-2xl shadow-xl p-6 md:p-10 relative">
+
+        <!-- Accessibility Settings Button -->
+        <button id="access-settings-btn" class="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Open accessibility settings">
+            <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.003 1.116-1.003h2.58c.556 0 1.026.46 1.116 1.003l.01.063c.09.503.41.97.85 1.304l.021.016c.41.3.91.5 1.44.5h2.09c.61 0 1.11.49 1.11 1.11v2.09c0 .53.2.94.5 1.44l.016.021c.33.44.8.76 1.3.85l.063.01c.542.09 1.003.56 1.003 1.116v2.58c0 .556-.46 1.026-1.003 1.116l-.063.01c-.503.09-.97.41-1.304.85l-.016.021c-.3.41-.5.91-.5 1.44v2.09c0 .61-.49 1.11-1.11 1.11h-2.09c-.53 0-.94.2-1.44.5l-.021.016c.44.33.76.8.85 1.3l-.01.063c-.09.542-.56 1.003-1.116 1.003h-2.58c-.556 0-1.026-.46-1.116-1.003l-.01-.063c-.09-.503-.41-.97-.85-1.304l-.021-.016c-.41-.3-.91-.5-1.44-.5h-2.09c-.61 0-1.11-.49-1.11-1.11v-2.09c0-.53-.2-.94-.5-1.44l-.016-.021c-.33-.44-.8-.76-1.3-.85l-.063-.01c-.542-.09-1.003-.56-1.003-1.116v-2.58c0-.556.46-1.026 1.003 1.116l.063-.01c.503-.09.97-.41 1.304-.85l.016-.021c.3-.41.5-.91.5-1.44v-2.09c0-.61.49 1.11 1.11-1.11h2.09c.53 0 .94-.2 1.44-.5l.021-.016c.44-.33.76-.8.85-1.3zM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5z" />
+            </svg>
+        </button>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container">
+            <!-- Progress Bar/Text -->
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+                    House Quiz
+                </h1>
+                <p id="progress-text" class="text-lg font-semibold text-gray-500"></p>
+            </div>
+
+            <!-- Question Image (REMOVED) -->
+            <!-- <img id="question-image" src="" alt="Image related to the quiz question" class="w-full h-48 md:h-64 object-cover rounded-lg mb-6 border-4 border-gray-100"> -->
+
+            <!-- Question Text -->
+            <p id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-6 min-h-[3em]"></p>
+
+            <!-- Options Container -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+
+            <!-- Next Button -->
+            <button id="next-btn" class="hidden mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg">
+                Next Question
+            </button>
+        </div>
+
+        <!-- Results Container (hidden by default) -->
+        <div id="results-container" class="hidden text-center">
+             <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                Quiz Complete!
+            </h1>
+            <p id="results-text" class="text-2xl text-gray-700 mb-8">
+                You scored 0 out of 0!
+            </p>
+            <button id="restart-btn" class="w-full max-w-xs mx-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg">
+                Restart Quiz
+            </button>
+        </div>
+
+        <!-- Screen reader announcer -->
+        <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    </div>
+
+
+    <!-- Accessibility Settings Modal (Copied from previous game) -->
+    <div id="access-modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40" aria-hidden="true"></div>
+    <div id="access-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-md rounded-2xl shadow-xl z-50 p-8" role="dialog" aria-modal="true" aria-labelledby="access-modal-title">
+        <h2 id="access-modal-title" class="text-2xl font-bold text-gray-800 mb-6">Accessibility Settings</h2>
+        <div class="space-y-6">
+            <!-- Text Size Control -->
+            <div class="flex items-center justify-between">
+                <label for="text-size-controls" class="text-lg text-gray-700 font-medium">
+                    Text Size
+                    <span id="text-size-display" class="text-sm text-gray-500 ml-2">100%</span>
+                </label>
+                <div id="text-size-controls" class="settings-control-group">
+                    <button id="text-decrease-btn" aria-label="Decrease text size" class="px-3">-</button>
+                    <button id="text-reset-btn" aria-label="Reset text size" class="text-sm px-3">Reset</button>
+                    <button id="text-increase-btn" aria-label="Increase text size" class="px-3">+</button>
+                </div>
+            </div>
+            <!-- Game Width Control -->
+            <div class="flex items-center justify-between">
+                <label for="width-controls" class="text-lg text-gray-700 font-medium">
+                    Game Width
+                    <span id="width-display" class="text-sm text-gray-500 ml-2">Default</span>
+                </label>
+                <div id="width-controls" class="settings-control-group">
+                    <button id="width-decrease-btn" aria-label="Decrease game width" class="px-3">-</button>
+                    <button id="width-reset-btn" aria-label="Reset game width" class="text-sm px-3">Reset</button>
+                    <button id="width-increase-btn" aria-label="Increase game width" class="px-3">+</button>
+                </div>
+            </div>
+        </div>
+        <!-- Close Button -->
+        <button id="access-modal-close-btn" class="mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg">
+            Close
+        </button>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Quiz Data (image properties removed) ---
+            const quizData = [
+                {
+                    question: "What feature makes Emily's Detached House “perfect” for her large family?",
+                    options: [
+                        "It has a small balcony.",
+                        "It is big and has a basement for games.",
+                        "It is painted bright white and has a blue door.",
+                        "It has a big green lawn."
+                    ],
+                    correct: 1 // index 1
+                },
+                {
+                    question: "Which house is described as being “simple” and “no stairs”?",
+                    options: [
+                        "The Canal House",
+                        "The Detached House",
+                        "The Maasai Hut",
+                        "The Whitewashed House"
+                    ],
+                    correct: 3 // index 3
+                },
+                {
+                    question: "Lars describes his home as a “real city house.” Where is it located?",
+                    options: [
+                        "In a big, snowy forest.",
+                        "On the African savanna.",
+                        "Right in the center of Amsterdam.",
+                        "On a cliff overlooking the sea."
+                    ],
+                    correct: 2 // index 2
+                },
+                {
+                    question: "What is unique about the construction of Kaelo's Maasai Hut?",
+                    options: [
+                        "It is made entirely of wood and has a fireplace.",
+                        "It is made of mud and sticks and can be built in one day.",
+                        "It is whitewashed and has a bright blue dome.",
+                        "It stands on tall wooden stilts."
+                    ],
+                    correct: 1 // index 1
+                },
+                {
+                    question: "What materials are used to build Kaelo's Maasai Hut?",
+                    options: [
+                        "Wood and a fireplace",
+                        "Mud and sticks",
+                        "White paint and a blue door",
+                        "Tall wooden stilts"
+                    ],
+                    correct: 1 // index 1
+                },
+                {
+                    question: "Why does Finn's Beach House sometimes feel like it’s “in the water”?",
+                    options: [
+                        "Because it is built right next to a canal.",
+                        "Because it is in a big, snowy forest.",
+                        "Because it has a big green lawn that gets wet.",
+                        "Because it's on stilts, and the tide comes in."
+                    ],
+                    correct: 3 // index 3
+                }
+            ];
+
+            // --- Audio Effects (Tone.js) ---
+            let audioStarted = false;
+            const correctSynth = new Tone.Synth().toDestination();
+            const wrongSynth = new Tone.MonoSynth({
+                oscillator: { type: 'square' },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0, release: 0.3 }
+            }).toDestination();
+            const winSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+            function startAudio() {
+                if (!audioStarted && Tone.context.state !== 'running') {
+                    Tone.start();
+                    audioStarted = true;
+                }
+            }
+            // --- End Audio Effects ---
+
+            // --- Game State ---
+            let currentQuestionIndex = 0;
+            let score = 0;
+
+            // --- DOM Elements ---
+            const mainContainer = document.getElementById('main-container');
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const progressText = document.getElementById('progress-text');
+            // const questionImage = document.getElementById('question-image'); // No longer needed
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const resultsText = document.getElementById('results-text');
+            const announcer = document.getElementById('announcer');
+
+            // --- Accessibility Settings DOM Elements ---
+            const accessSettingsBtn = document.getElementById('access-settings-btn');
+            const accessModalOverlay = document.getElementById('access-modal-overlay');
+            const accessModal = document.getElementById('access-modal');
+            const accessModalCloseBtn = document.getElementById('access-modal-close-btn');
+            let lastFocusedElement;
+            const textDecreaseBtn = document.getElementById('text-decrease-btn');
+            const textResetBtn = document.getElementById('text-reset-btn');
+            const textIncreaseBtn = document.getElementById('text-increase-btn');
+            const textSizeDisplay = document.getElementById('text-size-display');
+            let currentTextScale = 0;
+            const textScaleMin = -3;
+            const textScaleMax = 5;
+            const widthDecreaseBtn = document.getElementById('width-decrease-btn');
+            const widthResetBtn = document.getElementById('width-reset-btn');
+            const widthIncreaseBtn = document.getElementById('width-increase-btn');
+            const widthDisplay = document.getElementById('width-display');
+            const widthLevels = ['max-w-4xl', 'max-w-5xl', 'max-w-6xl', 'max-w-7xl', 'max-w-none'];
+            const widthDisplays = ['Small', 'Default', 'Medium', 'Large', 'Full'];
+            const defaultWidthIndex = 1;
+            let currentWidthIndex = defaultWidthIndex;
+
+            // --- Accessibility Settings Functions ---
+            function openAccessModal() {
+                startAudio();
+                lastFocusedElement = document.activeElement;
+                accessModalOverlay.classList.remove('hidden');
+                accessModal.classList.remove('hidden');
+                accessModalCloseBtn.focus();
+                document.addEventListener('keydown', handleEscKey);
+            }
+
+            function closeAccessModal() {
+                accessModalOverlay.classList.add('hidden');
+                accessModal.classList.add('hidden');
+                if (lastFocusedElement) lastFocusedElement.focus();
+                document.removeEventListener('keydown', handleEscKey);
+            }
+
+            function handleEscKey(e) {
+                if (e.key === 'Escape') closeAccessModal();
+            }
+
+            function updateTextSize() {
+                textDecreaseBtn.disabled = currentTextScale === textScaleMin;
+                textIncreaseBtn.disabled = currentTextScale === textScaleMax;
+                let percentage = 100 + currentTextScale * 10;
+                let newSize = 1 + currentTextScale * 0.1;
+                document.documentElement.style.setProperty('--base-font-size', `${newSize}rem`);
+                textSizeDisplay.textContent = `${percentage}%`;
+                // Announcer metni Türkçeleştirildi
+                announcer.textContent = `Yazı boyutu ${percentage}% olarak ayarlandı.`;
+            }
+
+            function updateWidth() {
+                widthDecreaseBtn.disabled = currentWidthIndex === 0;
+                widthIncreaseBtn.disabled = currentWidthIndex === widthLevels.length - 1;
+                mainContainer.classList.remove(...widthLevels);
+                mainContainer.classList.add(widthLevels[currentWidthIndex]);
+                widthDisplay.textContent = widthDisplays[currentWidthIndex];
+                // Announcer metni Türkçeleştirildi
+                announcer.textContent = `Oyun genişliği ${widthDisplays[currentWidthIndex]} olarak ayarlandı.`;
+            }
+
+            // --- Quiz Game Functions ---
+
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                score = 0;
+                resultsContainer.classList.add('hidden');
+                quizContainer.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+                // Announcer metni Türkçeleştirildi
+                announcer.textContent = "Oyun sıfırlandı. Yeni oyun başlıyor.";
+                showQuestion();
+            }
+
+            function showQuestion() {
+                // Reset options
+                optionsContainer.innerHTML = '';
+                nextBtn.classList.add('hidden');
+
+                const question = quizData[currentQuestionIndex];
+
+                // Update text
+                progressText.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+                questionText.textContent = question.question;
+
+                // Create option buttons
+                question.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-btn', 'w-full', 'p-4', 'text-left', 'font-semibold', 'rounded-lg', 'text-lg');
+                    button.dataset.index = index;
+                    button.addEventListener('click', selectAnswer);
+                    // Add touch event for immediate feedback on mobile
+                    button.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        selectAnswer(e);
+                    }, { passive: false });
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            // *** YENİ selectAnswer FOKSİYONU ***
+            function selectAnswer(e) {
+                startAudio();
+                const selectedButton = e.currentTarget;
+
+                // Eğer düğme zaten devre dışıysa (yani yanlış olarak işaretlenmişse) bir şey yapma
+                if (selectedButton.disabled) {
+                    return;
+                }
+
+                const selectedIndex = parseInt(selectedButton.dataset.index);
+                const correctIndex = quizData[currentQuestionIndex].correct;
+
+                // Cevabı kontrol et
+                if (selectedIndex === correctIndex) {
+                    // --- DOĞRU CEVAP ---
+                    score++;
+                    selectedButton.classList.add('correct');
+                    correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+                    // Announcer metni Türkçeleştirildi
+                    announcer.textContent = `Doğru!`;
+
+                    // Soru bittiği için TÜM düğmeleri devre dışı bırak
+                    Array.from(optionsContainer.children).forEach(btn => {
+                        btn.disabled = true;
+                        btn.removeEventListener('click', selectAnswer);
+                        btn.removeEventListener('touchstart', selectAnswer);
+                    });
+
+                    // Sonraki/Sonuçlar düğmesini göster
+                    if (currentQuestionIndex < quizData.length - 1) {
+                        nextBtn.textContent = "Next Question";
+                    } else {
+                        nextBtn.textContent = "Show Results";
+                    }
+                    nextBtn.classList.remove('hidden');
+                    nextBtn.focus(); // Erişilebilirlik için sonraki düğmeye odaklan
+
+                } else {
+                    // --- YANLIŞ CEVAP ---
+                    selectedButton.classList.add('wrong');
+                    // SADECE bu yanlış düğmeyi devre dışı bırak
+                    selectedButton.disabled = true;
+
+                    wrongSynth.triggerAttackRelease("G2", "4n", Tone.now());
+                    // Announcer metni Türkçeleştirildi
+                    announcer.textContent = `Yanlış. Tekrar deneyin.`;
+
+                    // Doğru cevabı gösterme.
+                    // Sonraki düğmesini gösterme.
+                }
+            }
+
+            function handleNextButton() {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }
+
+            function showResults() {
+                quizContainer.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+
+                resultsText.textContent = `You scored ${score} out of ${quizData.length}!`;
+                // Announcer metni Türkçeleştirildi
+                announcer.textContent = `Quiz tamamlandı. ${quizData.length} soruda ${score} doğru yaptınız.`;
+
+                // Play win sound
+                winSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "0.5", Tone.now());
+                restartBtn.focus();
+            }
+
+            // --- Initialization ---
+
+            // Quiz listeners
+            nextBtn.addEventListener('click', handleNextButton);
+            restartBtn.addEventListener('click', startQuiz);
+
+            // Settings modal event listeners
+            accessSettingsBtn.addEventListener('click', openAccessModal);
+            accessModalOverlay.addEventListener('click', closeAccessModal);
+            accessModalCloseBtn.addEventListener('click', closeAccessModal);
+
+            // Text size control listeners
+            textIncreaseBtn.addEventListener('click', () => {
+                if (currentTextScale < textScaleMax) {
+                    currentTextScale++;
+                    updateTextSize();
+                }
+            });
+            textDecreaseBtn.addEventListener('click', () => {
+                if (currentTextScale > textScaleMin) {
+                    currentTextScale--;
+                    updateTextSize();
+                }
+            });
+            textResetBtn.addEventListener('click', () => {
+                currentTextScale = 0;
+                updateTextSize();
+            });
+
+            // Width control listeners
+            widthIncreaseBtn.addEventListener('click', () => {
+                if (currentWidthIndex < widthLevels.length - 1) {
+                    currentWidthIndex++;
+                    updateWidth();
+                }
+            });
+            widthDecreaseBtn.addEventListener('click', () => {
+                if (currentWidthIndex > 0) {
+                    currentWidthIndex--;
+                    updateWidth();
+                }
+            });
+            widthResetBtn.addEventListener('click', () => {
+                currentWidthIndex = defaultWidthIndex;
+                updateWidth();
+            });
+
+            // Initial setup
+            updateTextSize();
+            updateWidth();
+            startQuiz(); // Start the quiz on page load
+        });
+    </script>
+</body>
+</html>
