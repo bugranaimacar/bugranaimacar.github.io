@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Who Lives Where? - Matching Game</title>
+        <!-- Load Tailwind CSS for styling -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Load Tone.js for audio -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+        <style>
+            /* Custom styles for the game */
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+            /* Apply base font size from CSS variable for scaling */
+            body {
+                font-family: "Inter", sans-serif;
+                font-size: var(--base-font-size, 1rem); /* Default 16px */
+                transition: font-size 0.2s ease-in-out;
+            }
+
+            /* Main container width transition */
+            #main-container {
+                transition: max-width 0.3s ease-in-out;
+            }
+
+            /* Base item styling */
+            .item {
+                border: 3px solid transparent;
+                transition: all 0.2s ease-in-out;
+                cursor: pointer;
+            }
+
+            /* Styling for a selected item */
+            .item.selected {
+                border-color: #3b82f6; /* blue-500 */
+                transform: scale(1.03);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Styling for a correctly matched item */
+            .item.matched {
+                border-color: #22c55e; /* green-500 */
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: scale(0.97);
+            }
+
+            /* Styling for an incorrectly matched item */
+            .item.wrong {
+                border-color: #ef4444; /* red-500 */
+                animation: shake 0.5s ease-in-out;
+            }
+
+            /* Shake animation for wrong answers */
+            @keyframes shake {
+                0%,
+                100% {
+                    transform: translateX(0);
+                }
+                25% {
+                    transform: translateX(-6px);
+                }
+                75% {
+                    transform: translateX(6px);
+                }
+            }
+
+            /* Accessibility focus style */
+            .item:focus-visible,
+            button:focus-visible,
+            [role="switch"]:focus-visible {
+                outline: 4px solid #3b82f6;
+                outline-offset: 2px;
+                border-radius: 0.5rem; /* 8px */
+            }
+
+            /* Screen-reader only element */
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+
+            /* Style for the settings modal button group */
+            .settings-control-group {
+                display: flex;
+                align-items: center;
+                border: 1px solid #d1d5db; /* gray-300 */
+                border-radius: 0.375rem; /* rounded-md */
+                overflow: hidden;
+            }
+            .settings-control-group button {
+                padding: 0.5rem; /* p-2 */
+                background-color: #f9fafb; /* gray-50 */
+                color: #374151; /* gray-700 */
+                font-size: 1.25rem; /* text-xl */
+                line-height: 1.25rem;
+                font-weight: 600;
+            }
+            .settings-control-group button:not(:last-child) {
+                border-right: 1px solid #d1d5db; /* gray-300 */
+            }
+            .settings-control-group button:hover {
+                background-color: #f3f4f6; /* gray-100 */
+            }
+            .settings-control-group button:focus-visible {
+                border-radius: 0;
+                outline-offset: -2px;
+            }
+            .settings-control-group button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        </style>
+    </head>
+    <body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
+        <!-- Main Game Container -->
+        <div
+            id="main-container"
+            class="bg-white w-full max-w-5xl rounded-2xl shadow-xl p-6 md:p-10 relative"
+        >
+            <!-- Accessibility Settings Button -->
+            <button
+                id="access-settings-btn"
+                class="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Open accessibility settings"
+            >
+                <svg
+                    class="w-8 h-8"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9.594 3.94c.09-.542.56-1.003 1.116-1.003h2.58c.556 0 1.026.46 1.116 1.003l.01.063c.09.503.41.97.85 1.304l.021.016c.41.3.91.5 1.44.5h2.09c.61 0 1.11.49 1.11 1.11v2.09c0 .53.2.94.5 1.44l.016.021c.33.44.8.76 1.3.85l.063.01c.542.09 1.003.56 1.003 1.116v2.58c0 .556-.46 1.026-1.003 1.116l-.063.01c-.503.09-.97.41-1.304.85l-.016.021c-.3.41-.5.91-.5 1.44v2.09c0 .61-.49 1.11-1.11 1.11h-2.09c-.53 0-.94.2-1.44.5l-.021.016c-.44.33-.76.8-.85 1.3l-.01.063c-.09.542-.56 1.003-1.116 1.003h-2.58c-.556 0-1.026-.46-1.116-1.003l-.01-.063c-.09-.503-.41-.97-.85-1.304l-.021-.016c-.41-.3-.91-.5-1.44-.5h-2.09c-.61 0-1.11-.49-1.11-1.11v-2.09c0-.53-.2-.94-.5-1.44l-.016-.021c-.33-.44-.8-.76-1.3-.85l-.063-.01c-.542-.09-1.003-.56-1.003-1.116v-2.58c0-.556.46-1.026 1.003 1.116l.063-.01c.503-.09.97-.41 1.304-.85l.016-.021c.3-.41.5-.91.5-1.44v-2.09c0-.61.49 1.11 1.11-1.11h2.09c.53 0 .94-.2 1.44-.5l.021-.016c.44-.33.76-.8.85-1.3zM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5z"
+                    />
+                </svg>
+            </button>
+
+            <!-- Title and Instructions -->
+            <h1
+                class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2"
+            >
+                Who Lives Where?
+            </h1>
+            <p class="text-center text-gray-600 text-lg mb-8">
+                Match the person to their correct home. Click a name and a
+                house.
+            </p>
+
+            <!-- Screen reader announcer -->
+            <div
+                id="announcer"
+                class="sr-only"
+                aria-live="polite"
+                aria-atomic="true"
+            ></div>
+
+            <!-- Main Game Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                <!-- Column 1: Names -->
+                <div id="name-container" class="space-y-4">
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="emily"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Emily
+                    </div>
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="eleni"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Eleni
+                    </div>
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="lars"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Lars
+                    </div>
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="kaelo"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Kaelo
+                    </div>
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="chloe"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Chloe
+                    </div>
+                    <div
+                        class="item name-item bg-blue-100 p-5 rounded-lg text-xl font-semibold text-blue-800 shadow-sm"
+                        data-name="finn"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                    >
+                        Finn
+                    </div>
+                </div>
+
+                <!-- Column 2: Houses (Images) -->
+                <div id="house-container" class="grid grid-cols-2 gap-4">
+                    <!-- A. Whitewashed House (Eleni) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="whitewashed"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-a"
+                    >
+                        <img
+                            src="eviki.jpg"
+                            alt="Whitewashed houses with blue domes"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-a"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            A. Whitewashed House
+                        </p>
+                    </div>
+
+                    <!-- B. Log Cabin (Chloe) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="log-cabin"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-b"
+                    >
+                        <img
+                            src="evbes.jpg"
+                            alt="Log cabin in the snow"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-b"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            B. Log Cabin
+                        </p>
+                    </div>
+
+                    <!-- C. Beach House (Finn) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="beach-house"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-c"
+                    >
+                        <img
+                            src="evalti.jpg"
+                            alt="Modern beach house by the sea"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-c"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            C. Beach House
+                        </p>
+                    </div>
+
+                    <!-- D. Detached House (Emily) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="detached-house"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-d"
+                    >
+                        <img
+                            src="evbir.jpg"
+                            alt="White detached house in a suburb"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-d"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            D. Detached House
+                        </p>
+                    </div>
+
+                    <!-- E. Canal House (Lars) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="canal-house"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-e"
+                    >
+                        <img
+                            src="evuc.jpg"
+                            alt="Historic brick houses by a canal"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-e"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            E. Canal House
+                        </p>
+                    </div>
+
+                    <!-- F. Maasai Hut (Kaelo) -->
+                    <div
+                        class="item house-item bg-gray-50 p-3 rounded-lg shadow-sm"
+                        data-house="maasai-hut"
+                        role="button"
+                        tabindex="0"
+                        aria-pressed="false"
+                        aria-labelledby="house-desc-f"
+                    >
+                        <img
+                            src="evdort.jpg"
+                            alt="Maasai hut in the savannah"
+                            class="w-full h-32 md:h-40 object-cover rounded-md mb-2"
+                        />
+                        <p
+                            id="house-desc-f"
+                            class="font-semibold text-gray-700 text-sm md:text-base"
+                        >
+                            F. Maasai Hut
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <button
+                id="reset-btn"
+                class="mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg"
+            >
+                Reset Game
+            </button>
+        </div>
+
+        <!-- Win Modal (hidden by default) -->
+        <div
+            id="win-modal"
+            class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+        >
+            <div
+                class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="win-title"
+            >
+                <h2
+                    id="win-title"
+                    class="text-3xl font-bold text-green-600 mb-4"
+                >
+                    Congratulations!
+                </h2>
+                <p class="text-lg text-gray-700 mb-6">
+                    You matched everyone to their homes!
+                </p>
+                <button
+                    id="play-again-btn"
+                    class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg"
+                >
+                    Play Again
+                </button>
+            </div>
+        </div>
+
+        <!-- Accessibility Settings Modal (Updated) -->
+        <div
+            id="access-modal-overlay"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            aria-hidden="true"
+        ></div>
+        <div
+            id="access-modal"
+            class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-md rounded-2xl shadow-xl z-50 p-8"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="access-modal-title"
+        >
+            <h2
+                id="access-modal-title"
+                class="text-2xl font-bold text-gray-800 mb-6"
+            >
+                Accessibility Settings
+            </h2>
+
+            <div class="space-y-6">
+                <!-- Text Size Control -->
+                <div class="flex items-center justify-between">
+                    <label
+                        for="text-size-controls"
+                        class="text-lg text-gray-700 font-medium"
+                    >
+                        Text Size
+                        <span
+                            id="text-size-display"
+                            class="text-sm text-gray-500 ml-2"
+                            >100%</span
+                        >
+                    </label>
+                    <div id="text-size-controls" class="settings-control-group">
+                        <button
+                            id="text-decrease-btn"
+                            aria-label="Decrease text size"
+                            class="px-3"
+                        >
+                            -
+                        </button>
+                        <button
+                            id="text-reset-btn"
+                            aria-label="Reset text size"
+                            class="text-sm px-3"
+                        >
+                            Reset
+                        </button>
+                        <button
+                            id="text-increase-btn"
+                            aria-label="Increase text size"
+                            class="px-3"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Game Width Control -->
+                <div class="flex items-center justify-between">
+                    <label
+                        for="width-controls"
+                        class="text-lg text-gray-700 font-medium"
+                    >
+                        Game Width
+                        <span
+                            id="width-display"
+                            class="text-sm text-gray-500 ml-2"
+                            >Default</span
+                        >
+                    </label>
+                    <div id="width-controls" class="settings-control-group">
+                        <button
+                            id="width-decrease-btn"
+                            aria-label="Decrease game width"
+                            class="px-3"
+                        >
+                            -
+                        </button>
+                        <button
+                            id="width-reset-btn"
+                            aria-label="Reset game width"
+                            class="text-sm px-3"
+                        >
+                            Reset
+                        </button>
+                        <button
+                            id="width-increase-btn"
+                            aria-label="Increase game width"
+                            class="px-3"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Close Button -->
+            <button
+                id="access-modal-close-btn"
+                class="mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-lg"
+            >
+                Close
+            </button>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Game data
+                const correctPairs = {
+                    emily: "detached-house",
+                    eleni: "whitewashed",
+                    lars: "canal-house",
+                    kaelo: "maasai-hut",
+                    chloe: "log-cabin",
+                    finn: "beach-house",
+                };
+                const totalPairs = Object.keys(correctPairs).length;
+
+                // --- Audio Effects (Tone.js) ---
+                let audioStarted = false; // Used to initialize audio context
+
+                // Click synth
+                const clickSynth = new Tone.MembraneSynth({
+                    octaves: 4,
+                    pitchDecay: 0.1,
+                }).toDestination();
+
+                // Correct match synth
+                const correctSynth = new Tone.Synth({
+                    oscillator: { type: "triangle" },
+                    envelope: {
+                        attack: 0.01,
+                        decay: 0.1,
+                        sustain: 0.2,
+                        release: 0.2,
+                    },
+                }).toDestination();
+
+                // Wrong match synth
+                const wrongSynth = new Tone.MonoSynth({
+                    oscillator: { type: "square" },
+                    envelope: {
+                        attack: 0.05,
+                        decay: 0.2,
+                        sustain: 0.1,
+                        release: 0.3,
+                    },
+                    filterEnvelope: {
+                        attack: 0.05,
+                        decay: 0.1,
+                        sustain: 0,
+                        release: 0.1,
+                        baseFrequency: 300,
+                        octaves: 2,
+                    },
+                }).toDestination();
+
+                // Win synth
+                const winSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "fatsawtooth" },
+                    envelope: {
+                        attack: 0.1,
+                        decay: 0.2,
+                        sustain: 0.5,
+                        release: 0.8,
+                    },
+                }).toDestination();
+
+                // Function to start audio context
+                function startAudio() {
+                    if (!audioStarted && Tone.context.state !== "running") {
+                        Tone.start();
+                        audioStarted = true;
+                    }
+                }
+                // --- End Audio Effects ---
+
+                // Game state
+                let selectedName = null;
+                let selectedHouse = null;
+                let matchedCount = 0;
+                let lockBoard = false; // Prevents clicking while checking a match
+
+                // DOM Elements
+                const mainContainer = document.getElementById("main-container");
+                const nameItems = document.querySelectorAll(".name-item");
+                const houseItems = document.querySelectorAll(".house-item");
+                const allItems = document.querySelectorAll(".item");
+                const nameContainer = document.getElementById("name-container");
+                const houseContainer =
+                    document.getElementById("house-container");
+                const resetBtn = document.getElementById("reset-btn");
+                const winModal = document.getElementById("win-modal");
+                const playAgainBtn = document.getElementById("play-again-btn");
+                const announcer = document.getElementById("announcer"); // Accessibility announcer
+
+                // --- Accessibility Settings DOM Elements ---
+                const accessSettingsBtn = document.getElementById(
+                    "access-settings-btn",
+                );
+                const accessModalOverlay = document.getElementById(
+                    "access-modal-overlay",
+                );
+                const accessModal = document.getElementById("access-modal");
+                const accessModalCloseBtn = document.getElementById(
+                    "access-modal-close-btn",
+                );
+                let lastFocusedElement; // To store element that opened modal
+
+                // Text Size controls
+                const textDecreaseBtn =
+                    document.getElementById("text-decrease-btn");
+                const textResetBtn = document.getElementById("text-reset-btn");
+                const textIncreaseBtn =
+                    document.getElementById("text-increase-btn");
+                const textSizeDisplay =
+                    document.getElementById("text-size-display");
+                let currentTextScale = 0; // 0 = 100% (1rem)
+                const textScaleMin = -3; // 70%
+                const textScaleMax = 5; // 150%
+
+                // Width controls
+                const widthDecreaseBtn =
+                    document.getElementById("width-decrease-btn");
+                const widthResetBtn =
+                    document.getElementById("width-reset-btn");
+                const widthIncreaseBtn =
+                    document.getElementById("width-increase-btn");
+                const widthDisplay = document.getElementById("width-display");
+                const widthLevels = [
+                    "max-w-4xl",
+                    "max-w-5xl",
+                    "max-w-6xl",
+                    "max-w-7xl",
+                    "max-w-none",
+                ];
+                const widthDisplays = [
+                    "Small",
+                    "Default",
+                    "Medium",
+                    "Large",
+                    "Full",
+                ];
+                const defaultWidthIndex = 1; // 'max-w-5xl'
+                let currentWidthIndex = defaultWidthIndex;
+
+                // --- Accessibility Settings Functions ---
+
+                function openAccessModal() {
+                    startAudio();
+                    lastFocusedElement = document.activeElement; // Save last focused element
+                    accessModalOverlay.classList.remove("hidden");
+                    accessModal.classList.remove("hidden");
+                    accessModalCloseBtn.focus(); // Focus close button in modal
+                    // Listen for ESC key
+                    document.addEventListener("keydown", handleEscKey);
+                }
+
+                function closeAccessModal() {
+                    accessModalOverlay.classList.add("hidden");
+                    accessModal.classList.add("hidden");
+                    // Return focus to the element that opened the modal
+                    if (lastFocusedElement) {
+                        lastFocusedElement.focus();
+                    }
+                    document.removeEventListener("keydown", handleEscKey);
+                }
+
+                // Close modal with ESC key
+                function handleEscKey(e) {
+                    if (e.key === "Escape") {
+                        closeAccessModal();
+                    }
+                }
+
+                // Update Text Size
+                function updateTextSize() {
+                    // Enable/disable buttons at limits
+                    textDecreaseBtn.disabled =
+                        currentTextScale === textScaleMin;
+                    textIncreaseBtn.disabled =
+                        currentTextScale === textScaleMax;
+
+                    let percentage = 100 + currentTextScale * 10;
+                    let newSize = 1 + currentTextScale * 0.1;
+                    document.documentElement.style.setProperty(
+                        "--base-font-size",
+                        `${newSize}rem`,
+                    );
+                    textSizeDisplay.textContent = `${percentage}%`;
+                    announcer.textContent = `Text size set to ${percentage}%.`;
+                }
+
+                // Update Game Width
+                function updateWidth() {
+                    // Enable/disable buttons at limits
+                    widthDecreaseBtn.disabled = currentWidthIndex === 0;
+                    widthIncreaseBtn.disabled =
+                        currentWidthIndex === widthLevels.length - 1;
+
+                    // Remove all possible width classes and add the current one
+                    mainContainer.classList.remove(...widthLevels);
+                    mainContainer.classList.add(widthLevels[currentWidthIndex]);
+
+                    widthDisplay.textContent = widthDisplays[currentWidthIndex];
+                    announcer.textContent = `Game width set to ${widthDisplays[currentWidthIndex]}.`;
+                }
+
+                // --- Main Game Functions ---
+
+                // Shuffle the children of a parent element
+                function shuffleChildren(parent) {
+                    let children = Array.from(parent.children);
+                    for (let i = children.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [children[i], children[j]] = [children[j], children[i]];
+                    }
+                    children.forEach((child) => parent.appendChild(child));
+                }
+
+                // Handle clicking a name
+                function selectName(e) {
+                    // Prevent 'click' firing after 'touchstart'
+                    if (e.type === "touchstart") {
+                        e.preventDefault();
+                    }
+                    startAudio(); // Start audio context
+                    const item = e.currentTarget;
+                    if (
+                        lockBoard ||
+                        item.classList.contains("matched") ||
+                        item === selectedName
+                    ) {
+                        return;
+                    }
+
+                    // Play click sound
+                    clickSynth.triggerAttackRelease("C2", "8n", Tone.now());
+
+                    // Deselect previous name if any
+                    if (selectedName) {
+                        selectedName.classList.remove("selected");
+                        selectedName.setAttribute("aria-pressed", "false"); // Update ARIA state
+                    }
+
+                    // Select new name
+                    selectedName = item;
+                    selectedName.classList.add("selected");
+                    selectedName.setAttribute("aria-pressed", "true"); // Update ARIA state
+
+                    // Announce
+                    announcer.textContent = `${selectedName.textContent} selected.`;
+
+                    checkForMatch();
+                }
+
+                // Handle clicking a house
+                function selectHouse(e) {
+                    if (e.type === "touchstart") {
+                        e.preventDefault();
+                    }
+                    startAudio(); // Start audio context
+                    const item = e.currentTarget;
+                    if (
+                        lockBoard ||
+                        item.classList.contains("matched") ||
+                        item === selectedHouse
+                    ) {
+                        return;
+                    }
+
+                    // Play click sound
+                    clickSynth.triggerAttackRelease("C2", "8n", Tone.now());
+
+                    // Deselect previous house if any
+                    if (selectedHouse) {
+                        selectedHouse.classList.remove("selected");
+                        selectedHouse.setAttribute("aria-pressed", "false"); // Update ARIA state
+                    }
+
+                    // Select new house
+                    selectedHouse = item;
+                    selectedHouse.classList.add("selected");
+                    selectedHouse.setAttribute("aria-pressed", "true"); // Update ARIA state
+
+                    // Announce (get house description from p tag)
+                    const desc = item.querySelector("p").textContent;
+                    announcer.textContent = `${desc} selected.`;
+
+                    checkForMatch();
+                }
+
+                // Check if the selected pair is a match
+                function checkForMatch() {
+                    if (!selectedName || !selectedHouse) {
+                        return; // Not ready to check yet
+                    }
+
+                    lockBoard = true; // Lock the board
+                    const nameKey = selectedName.dataset.name;
+                    const houseKey = selectedHouse.dataset.house;
+
+                    // Get text for announcer
+                    const nameText = selectedName.textContent;
+                    const houseText =
+                        selectedHouse.querySelector("p").textContent;
+
+                    if (correctPairs[nameKey] === houseKey) {
+                        // It's a match!
+                        // Play correct sound
+                        correctSynth.triggerAttackRelease(
+                            "C5",
+                            "8n",
+                            Tone.now(),
+                        );
+
+                        matchedCount++;
+                        selectedName.classList.add("matched");
+                        selectedHouse.classList.add("matched");
+                        selectedName.classList.remove("selected");
+                        selectedHouse.classList.remove("selected");
+
+                        // Accessibility: Disable matched items
+                        selectedName.setAttribute("aria-disabled", "true");
+                        selectedHouse.setAttribute("aria-disabled", "true");
+                        selectedName.setAttribute("tabindex", "-1"); // Remove from tab order
+                        selectedHouse.setAttribute("tabindex", "-1");
+
+                        // Announce
+                        announcer.textContent = `Correct! ${nameText} matched with ${houseText}.`;
+
+                        resetSelection(true); // 'true' because it was a match
+
+                        // Check for win
+                        if (matchedCount === totalPairs) {
+                            setTimeout(() => {
+                                winModal.classList.remove("hidden");
+                                // Play win sound
+                                winSynth.triggerAttackRelease(
+                                    ["C4", "E4", "G4", "C5"],
+                                    "0.5",
+                                    Tone.now(),
+                                );
+                                announcer.textContent =
+                                    "Congratulations! You matched everyone to their homes!";
+                                playAgainBtn.focus(); // Focus button in modal
+                            }, 500); // Show win modal after a short delay
+                        }
+                    } else {
+                        // It's a wrong match
+                        // Play wrong sound
+                        wrongSynth.triggerAttackRelease("G2", "4n", Tone.now());
+
+                        selectedName.classList.add("wrong");
+                        selectedHouse.classList.add("wrong");
+
+                        // Announce
+                        announcer.textContent = `Incorrect. ${nameText} and ${houseText} do not match. Try again.`;
+
+                        // Remove wrong/selected classes after a delay
+                        setTimeout(() => {
+                            selectedName.classList.remove("wrong", "selected");
+                            selectedHouse.classList.remove("wrong", "selected");
+                            resetSelection(false); // 'false' because it wasn't a match
+                        }, 800);
+                    }
+                }
+
+                // Clear the current selection and unlock board
+                function resetSelection(isMatch) {
+                    // Remove ARIA state from selection
+                    if (selectedName && !isMatch) {
+                        selectedName.setAttribute("aria-pressed", "false");
+                    }
+                    if (selectedHouse && !isMatch) {
+                        selectedHouse.setAttribute("aria-pressed", "false");
+                    }
+
+                    selectedName = null;
+                    selectedHouse = null;
+                    lockBoard = false;
+                }
+
+                // Reset the entire game
+                function resetGame() {
+                    startAudio();
+                    allItems.forEach((item) => {
+                        item.classList.remove("matched", "selected", "wrong");
+                        // Reset accessibility attributes
+                        item.setAttribute("aria-pressed", "false");
+                        item.removeAttribute("aria-disabled");
+                        item.setAttribute("tabindex", "0"); // Add back to tab order
+                    });
+
+                    matchedCount = 0;
+                    resetSelection(false);
+                    winModal.classList.add("hidden");
+                    announcer.textContent = "Game reset. Starting new game.";
+
+                    // Re-shuffle the items
+                    shuffleChildren(nameContainer);
+                    shuffleChildren(houseContainer);
+
+                    // Focus on the first name
+                    if (nameContainer.children[0]) {
+                        nameContainer.children[0].focus();
+                    }
+                }
+
+                // Keyboard navigation (Enter and Space)
+                function handleKeydown(e) {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault(); // Prevent page scrolling
+                        if (e.currentTarget.classList.contains("name-item")) {
+                            selectName(e);
+                        } else if (
+                            e.currentTarget.classList.contains("house-item")
+                        ) {
+                            selectHouse(e);
+                        }
+                    }
+                }
+
+                // --- Initialization ---
+
+                // Add event listeners (click, touch, and keyboard)
+                allItems.forEach((item) => {
+                    item.addEventListener("click", (e) => {
+                        if (item.classList.contains("name-item")) selectName(e);
+                        else selectHouse(e);
+                    });
+
+                    // Add touch support
+                    item.addEventListener(
+                        "touchstart",
+                        (e) => {
+                            if (item.classList.contains("name-item"))
+                                selectName(e);
+                            else selectHouse(e);
+                        },
+                        { passive: false },
+                    ); // 'passive: false' to allow preventDefault
+
+                    // Add keyboard support
+                    item.addEventListener("keydown", handleKeydown);
+                });
+
+                resetBtn.addEventListener("click", resetGame);
+                playAgainBtn.addEventListener("click", resetGame);
+
+                // Settings modal event listeners
+                accessSettingsBtn.addEventListener("click", openAccessModal);
+                accessModalOverlay.addEventListener("click", closeAccessModal);
+                accessModalCloseBtn.addEventListener("click", closeAccessModal);
+
+                // Text size control listeners
+                textIncreaseBtn.addEventListener("click", () => {
+                    if (currentTextScale < textScaleMax) {
+                        currentTextScale++;
+                        updateTextSize();
+                    }
+                });
+                textDecreaseBtn.addEventListener("click", () => {
+                    if (currentTextScale > textScaleMin) {
+                        currentTextScale--;
+                        updateTextSize();
+                    }
+                });
+                textResetBtn.addEventListener("click", () => {
+                    currentTextScale = 0;
+                    updateTextSize();
+                });
+
+                // Width control listeners
+                widthIncreaseBtn.addEventListener("click", () => {
+                    if (currentWidthIndex < widthLevels.length - 1) {
+                        currentWidthIndex++;
+                        updateWidth();
+                    }
+                });
+                widthDecreaseBtn.addEventListener("click", () => {
+                    if (currentWidthIndex > 0) {
+                        currentWidthIndex--;
+                        updateWidth();
+                    }
+                });
+                widthResetBtn.addEventListener("click", () => {
+                    currentWidthIndex = defaultWidthIndex;
+                    updateWidth();
+                });
+
+                // Initial shuffle and setup
+                shuffleChildren(nameContainer);
+                shuffleChildren(houseContainer);
+                updateTextSize(); // Set initial text size state
+                updateWidth(); // Set initial width state
+            });
+        </script>
+    </body>
+</html>
