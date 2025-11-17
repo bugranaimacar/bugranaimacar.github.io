@@ -725,10 +725,6 @@
 
                 // Handle clicking a name
                 function selectName(e) {
-                    // Prevent 'click' firing after 'touchstart'
-                    if (e.type === "touchstart") {
-                        e.preventDefault();
-                    }
                     startAudio(); // Start audio context
                     const item = e.currentTarget;
                     if (
@@ -761,9 +757,6 @@
 
                 // Handle clicking a house
                 function selectHouse(e) {
-                    if (e.type === "touchstart") {
-                        e.preventDefault();
-                    }
                     startAudio(); // Start audio context
                     const item = e.currentTarget;
                     if (
@@ -930,21 +923,30 @@
 
                 // Add event listeners (click, touch, and keyboard)
                 allItems.forEach((item) => {
-                    item.addEventListener("click", (e) => {
-                        if (item.classList.contains("name-item")) selectName(e);
-                        else selectHouse(e);
-                    });
-
-                    // Add touch support
+                    // Add touch support first (handles mobile better)
                     item.addEventListener(
-                        "touchstart",
+                        "touchend",
                         (e) => {
-                            if (item.classList.contains("name-item"))
+                            e.preventDefault(); // Prevent mouse events after touch
+                            if (item.classList.contains("name-item")) {
                                 selectName(e);
-                            else selectHouse(e);
+                            } else {
+                                selectHouse(e);
+                            }
                         },
                         { passive: false },
-                    ); // 'passive: false' to allow preventDefault
+                    );
+
+                    // Add click support for desktop
+                    item.addEventListener("click", (e) => {
+                        // Prevent click from firing immediately after touch on mobile
+                        if (e.detail === 0) return; // Ignore synthetic clicks
+                        if (item.classList.contains("name-item")) {
+                            selectName(e);
+                        } else {
+                            selectHouse(e);
+                        }
+                    });
 
                     // Add keyboard support
                     item.addEventListener("keydown", handleKeydown);
