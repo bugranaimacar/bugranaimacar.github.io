@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedroom Prepositions Game</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --success-dark: #2a9d8f;
+            --error: #e63946;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-light: #8d99ae;
+            --border-radius: 16px;
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#e9ecef 1px, transparent 1px);
+            background-size: 20px 20px;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Layout Container */
+        .main-wrapper {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--secondary);
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        /* Game Board Container */
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* 16:9 Image Container */
+        .image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: calc(var(--border-radius) / 1.5);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: #eee;
+            border: 4px solid white;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.02);
+        }
+
+        /* Content Area Wrapper */
+        .game-interface {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Word Bank Panel - Now Full Width */
+        .word-bank-panel {
+            background: linear-gradient(135deg, #f0f4ff 0%, #eef1f5 100%);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(67, 97, 238, 0.1);
+            /* Optional: Stick to top if you scroll down a long list of questions */
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .word-bank-header {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Center the header text */
+            gap: 10px;
+        }
+
+        .word-bank-header::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-height: 50px;
+            justify-content: center;
+            /* Center the words horizontally */
+        }
+
+        .draggable-item {
+            background: white;
+            color: var(--primary);
+            padding: 10px 25px;
+            /* Slightly wider buttons for better target */
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 2px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            font-size: 1rem;
+        }
+
+        .draggable-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+            border-color: var(--primary-light);
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .draggable-item.is-dragging {
+            opacity: 0.5;
+            background: #e9ecef;
+        }
+
+        /* Questions List */
+        .sentences-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sentence-item {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border-left: 4px solid #eee;
+            font-size: 1.5rem;
+            line-height: 1.8;
+            transition: all 0.3s ease;
+        }
+
+        .sentence-item:hover {
+            border-left-color: var(--primary-light);
+            background: #fdfdfd;
+        }
+
+        .drop-zone {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 120px;
+            padding: 0 15px;
+            height: 38px;
+            margin: 0 5px;
+            vertical-align: middle;
+            background: #f8f9fa;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            color: var(--primary);
+            font-weight: 700;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        /* Active Board State - When dragging starts */
+        body.dragging-active .drop-zone {
+            background: #eef2ff;
+            border-color: var(--primary-light);
+            animation: pulse-border 2s infinite;
+        }
+
+        /* Hovering over a drop zone */
+        .drop-zone.drag-over {
+            background: #dbeafe;
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+            border-style: solid;
+        }
+
+        /* Dropped State */
+        .drop-zone.filled {
+            background: white;
+            border-style: solid;
+            border-color: var(--secondary);
+            color: var(--secondary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            padding-right: 30px;
+            /* Make space for the X icon */
+        }
+
+        .drop-zone.filled::after {
+            content: '×';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: #ccc;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+
+        .drop-zone.filled:hover::after {
+            color: var(--error);
+        }
+
+        /* Feedback States */
+        .drop-zone.correct {
+            background: #d1fae5;
+            border-color: var(--success-dark);
+            color: var(--success-dark);
+            border-style: solid;
+        }
+
+        .drop-zone.incorrect {
+            background: #fee2e2;
+            border-color: var(--error);
+            color: var(--error);
+            border-style: solid;
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        /* Controls */
+        .controls-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-check {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(43, 45, 66, 0.2);
+        }
+
+        .btn-check:hover {
+            background: black;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(43, 45, 66, 0.3);
+        }
+
+        .result-display {
+            height: 24px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-color: #cbd5e1;
+            }
+
+            50% {
+                border-color: var(--primary-light);
+            }
+
+            100% {
+                border-color: #cbd5e1;
+            }
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+        <header>
+            <h1>Bedroom Prepositions</h1>
+            <p class="subtitle">Complete the sentences by dragging the correct preposition.</p>
+        </header>
+
+        <div class="game-board">
+
+            <!-- 1. IMAGE AT THE TOP -->
+            <div class="image-container">
+                <!-- Replace 'photo.jpg' with your actual image file -->
+                <img src="photo.jpg" alt="Cartoon bedroom with toys and furniture" draggable="false">
+            </div>
+
+            <div class="game-interface">
+
+                <!-- 2. WORD BANK AT THE TOP OF QUESTIONS (Full Width) -->
+                <div class="word-bank-panel">
+                    <div class="word-bank-header">Word Bank</div>
+                    <div class="word-list" id="wordList">
+                        <div class="draggable-item" draggable="true">In</div>
+                        <div class="draggable-item" draggable="true">On</div>
+                        <div class="draggable-item" draggable="true">Under</div>
+                        <div class="draggable-item" draggable="true">Next to</div>
+                        <div class="draggable-item" draggable="true">In front of</div>
+                        <div class="draggable-item" draggable="true">Between</div>
+                        <div class="draggable-item" draggable="true">Behind</div>
+                    </div>
+                </div>
+
+                <!-- 3. QUESTIONS BELOW -->
+                <div class="sentences-list">
+                    <div class="sentence-item">
+                        1. The teddy bear is <div class="drop-zone" data-answer="In"></div> the orange toy box.
+                    </div>
+                    <div class="sentence-item">
+                        2. The green book is <div class="drop-zone" data-answer="On"></div> the desk.
+                    </div>
+                    <div class="sentence-item">
+                        3. The colorful ball is <div class="drop-zone" data-answer="Under"></div> the bed.
+                    </div>
+                    <div class="sentence-item">
+                        4. The blue rug is <div class="drop-zone" data-answer="Between"></div> the bed and the chair.
+                    </div>
+                    <div class="sentence-item">
+                        5. The window is <div class="drop-zone" data-answer="Between"></div> the two tall bookshelves.
+                    </div>
+                    <div class="sentence-item">
+                        6. The yellow backpack is hanging <div class="drop-zone" data-answer="On"></div> the door.
+                    </div>
+                    <div class="sentence-item">
+                        7. The pink chair is <div class="drop-zone" data-answer="In front of"></div> the blue backpack.
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-area">
+                        <button class="btn-check" onclick="checkAnswers()">Check Answers</button>
+                        <div class="result-display" id="resultMessage"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const draggables = document.querySelectorAll('.draggable-item');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const body = document.body;
+
+        let draggedContent = null;
+        let draggedSource = null;
+
+        // --- Drag Source Logic ---
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggedContent = e.target.innerText;
+                draggedSource = e.target;
+                e.target.classList.add('is-dragging');
+                body.classList.add('dragging-active');
+            });
+
+            draggable.addEventListener('dragend', (e) => {
+                e.target.classList.remove('is-dragging');
+                body.classList.remove('dragging-active');
+            });
+        });
+
+        // --- Drop Zone Logic ---
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!zone.classList.contains('drag-over')) {
+                    zone.classList.add('drag-over');
+                }
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+
+                if (draggedContent) {
+                    zone.innerText = draggedContent;
+                    zone.classList.add('filled');
+                    zone.classList.remove('correct', 'incorrect');
+                }
+            });
+
+            // Click to clear
+            zone.addEventListener('click', () => {
+                if (zone.innerText !== '') {
+                    zone.innerText = '';
+                    zone.classList.remove('filled', 'correct', 'incorrect');
+                }
+            });
+        });
+
+        // --- Check Answers Logic ---
+        function checkAnswers() {
+            let score = 0;
+            let total = dropZones.length;
+            const resultMsg = document.getElementById('resultMessage');
+            let allFilled = true;
+
+            dropZones.forEach(zone => {
+                const userAnswer = zone.innerText.trim();
+                const validAnswers = zone.getAttribute('data-answer').split(',');
+
+                if (userAnswer === "") {
+                    allFilled = false;
+                    zone.classList.remove('correct', 'incorrect');
+                } else if (validAnswers.includes(userAnswer)) {
+                    zone.classList.add('correct');
+                    zone.classList.remove('incorrect');
+                    score++;
+                } else {
+                    zone.classList.add('incorrect');
+                    zone.classList.remove('correct');
+                }
+            });
+
+            if (!allFilled) {
+                resultMsg.style.color = 'var(--text-light)';
+                resultMsg.innerText = "Please fill in all the blanks!";
+                return;
+            }
+
+            if (score === total) {
+                resultMsg.style.color = 'var(--success-dark)';
+                resultMsg.innerText = "🎉 Perfect! All answers are correct!";
+            } else {
+                resultMsg.style.color = 'var(--error)';
+                resultMsg.innerText = `You got ${score} out of ${total} correct. Keep trying!`;
+            }
+        }
+    </script>
+</body>
+
+</html>
