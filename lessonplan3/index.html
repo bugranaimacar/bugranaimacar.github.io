@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESL Places Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Quicksand:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Smart board settings: change these values easily */
+            --app-max-width: 1280px;
+            --app-padding: 18px;
+            --topbar-padding-y: 18px;
+            --topbar-padding-x: 24px;
+            --card-padding: 24px;
+            --media-max-width: 860px;
+            --media-height: 480px;
+            --answers-max-width: 860px;
+            --shot-panel-max-width: 1280px;
+            --question-font-size: 2rem;
+            --answer-font-size: 1.18rem;
+
+            --bg-1: #ffd3da;
+            --bg-2: #fde7ff;
+            --panel: #ffffffee;
+            --text: #263547;
+            --muted: #687789;
+            --primary: #ff6b6b;
+            --primary-dark: #e95151;
+            --secondary: #5cc8c0;
+            --correct: #22b573;
+            --wrong: #e55353;
+            --line: #e4e9f0;
+            --shadow: 0 18px 50px rgba(45, 58, 77, 0.16);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, #fff3b0 0, transparent 25%),
+                radial-gradient(circle at top right, #c3f0ff 0, transparent 22%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .app {
+            width: 100%;
+            max-width: var(--app-max-width);
+            height: 100%;
+            margin: 0 auto;
+            padding: var(--app-padding);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .topbar {
+            background: var(--panel);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: var(--topbar-padding-y) var(--topbar-padding-x);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-badge {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-size: 28px;
+            background: linear-gradient(135deg, #ff8f8f, #ff6b6b);
+            box-shadow: 0 10px 24px rgba(255, 107, 107, 0.28);
+        }
+
+        .brand-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 700;
+        }
+
+        .brand-subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .settings-btn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #27384a, #42556b);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(39, 56, 74, 0.22);
+        }
+
+        .settings-btn:active {
+            transform: translateY(1px);
+        }
+
+        .pill {
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: #f7f8fb;
+            color: var(--text);
+            font-weight: 700;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .pill.score {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(255, 107, 107, 0.28);
+        }
+
+        .game-card {
+            flex: 1;
+            background: var(--panel);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: var(--shadow);
+            padding: var(--card-padding);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .question-wrap {
+            text-align: center;
+        }
+
+        .step-chip {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .step-chip.place {
+            background: linear-gradient(135deg, #6b7cff, #5463eb);
+        }
+
+        .step-chip.product {
+            background: linear-gradient(135deg, #ff7ca8, #f1547f);
+        }
+
+        .question-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: var(--question-font-size);
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }
+
+        .question-hint {
+            color: var(--muted);
+            font-size: 1.02rem;
+        }
+
+        .media-wrap {
+            width: 100%;
+            max-width: var(--media-max-width);
+            margin: 0 auto;
+            border-radius: 28px;
+            padding: 14px;
+            background: linear-gradient(135deg, #fff, #f3f6fb);
+            box-shadow: inset 0 0 0 2px #fff, 0 14px 32px rgba(55, 69, 92, 0.12);
+        }
+
+        .media-frame {
+            width: 100%;
+            height: var(--media-height);
+            border-radius: 22px;
+            overflow: hidden;
+            background: #edf2f7;
+            display: grid;
+            place-items: center;
+        }
+
+        .place-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .answers-grid {
+            width: 100%;
+            max-width: var(--answers-max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .answer-btn {
+            min-height: 86px;
+            padding: 18px 20px;
+            border: 3px solid var(--line);
+            border-radius: 20px;
+            background: #fff;
+            color: var(--text);
+            font-size: var(--answer-font-size);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            box-shadow: 0 10px 22px rgba(45, 58, 77, 0.06);
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            border-color: #cfd7e3;
+            box-shadow: 0 14px 26px rgba(45, 58, 77, 0.1);
+        }
+
+        .answer-btn:active {
+            transform: translateY(0);
+        }
+
+        .answer-btn.correct,
+        .answer-btn.correct-answer {
+            border-color: #96e5bc;
+            background: #eaf9f1;
+            color: #117247;
+        }
+
+        .answer-btn.wrong {
+            border-color: #ffc1c1;
+            background: #fff0f0;
+            color: #9d2f2f;
+        }
+
+        .answer-btn.disabled {
+            pointer-events: none;
+        }
+
+        .reveal-action {
+            width: 100%;
+            max-width: var(--answers-max-width);
+            margin: 8px auto 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .reveal-action-btn {
+            display: none;
+            padding: 16px 34px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #5cc8c0, #45b5ad);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            box-shadow: 0 12px 24px rgba(92, 200, 192, 0.28);
+            cursor: pointer;
+        }
+
+        .reveal-action-btn.show {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-row {
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 12px;
+            background: #edf1f5;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--secondary), #60d8cf);
+            transition: width 0.25s ease;
+        }
+
+        .start-overlay,
+        .result-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255, 235, 241, 0.96), rgba(244, 240, 255, 0.96));
+            backdrop-filter: blur(8px);
+        }
+
+        .result-overlay {
+            display: none;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 95;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(31, 42, 58, 0.36);
+            backdrop-filter: blur(8px);
+            padding: 18px;
+        }
+
+        .settings-dialog {
+            width: min(94vw, 760px);
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 30px;
+            box-shadow: 0 24px 60px rgba(25, 34, 46, 0.26);
+            padding: 24px;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .settings-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .settings-close {
+            width: 46px;
+            height: 46px;
+            border: none;
+            border-radius: 14px;
+            background: #f1f4f8;
+            color: var(--text);
+            font-size: 1.4rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .setting-card {
+            border: 2px solid #edf1f5;
+            border-radius: 20px;
+            padding: 16px;
+            background: #fbfcfe;
+        }
+
+        .setting-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .setting-value {
+            color: var(--primary-dark);
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .setting-help {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-top: 8px;
+            line-height: 1.35;
+        }
+
+        .setting-input {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .settings-secondary,
+        .settings-primary {
+            border: none;
+            border-radius: 18px;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .settings-secondary {
+            background: #eef3f8;
+            color: var(--text);
+        }
+
+        .settings-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+        }
+
+        .overlay-card {
+            width: min(92vw, 620px);
+            background: #fff;
+            border-radius: 36px;
+            padding: 42px 34px;
+            box-shadow: 0 24px 60px rgba(45, 58, 77, 0.18);
+            text-align: center;
+        }
+
+        .overlay-icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+        }
+
+        .overlay-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+        }
+
+        .overlay-text {
+            color: var(--muted);
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 26px;
+        }
+
+        .primary-btn {
+            min-width: 240px;
+            padding: 20px 32px;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            font-size: 1.35rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 14px 28px rgba(255, 107, 107, 0.3);
+        }
+
+        .overlay-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .shot-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(27, 35, 48, 0.36);
+            backdrop-filter: blur(6px);
+            padding: 20px;
+        }
+
+        .shot-panel {
+            width: min(var(--shot-panel-max-width), 100%);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .shot-stage {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(19, 25, 36, 0.28);
+            position: relative;
+            background: linear-gradient(180deg, #8fd9ff 0%, #d9f5ff 45%, #f8fcff 46%, #f8fcff 100%);
+        }
+
+        .shot-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .shot-status {
+            position: absolute;
+            left: 50%;
+            top: 8%;
+            transform: translateX(-50%) scale(0.6);
+            opacity: 0;
+            font-family: 'Quicksand', sans-serif;
+            font-size: clamp(2rem, 5vw, 5rem);
+            font-weight: 800;
+            text-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+            transition: transform 0.38s ease, opacity 0.38s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .shot-status.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .shot-status.success {
+            color: #1f9b5a;
+        }
+
+        .shot-status.fail {
+            color: #d14949;
+        }
+
+        .shot-continue {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 18px;
+            background: #fff;
+            color: var(--text);
+            font-size: 1.25rem;
+            font-weight: 800;
+            box-shadow: 0 14px 28px rgba(19, 25, 36, 0.18);
+            cursor: not-allowed;
+            opacity: 0.45;
+            pointer-events: none;
+            transform: scale(0.98);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .shot-continue.show {
+            cursor: pointer;
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        @media (max-width: 900px) {
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-row {
+                justify-content: stretch;
+            }
+
+            .pill {
+                flex: 1;
+            }
+
+            .settings-btn {
+                width: 100%;
+            }
+
+            .media-frame {
+                height: min(320px, var(--media-height));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .app {
+                padding: 12px;
+            }
+
+            .game-card {
+                padding: 18px;
+            }
+
+            .question-title {
+                font-size: min(1.55rem, var(--question-font-size));
+            }
+
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .answer-btn {
+                min-height: 74px;
+                font-size: min(1.05rem, var(--answer-font-size));
+            }
+
+            .media-frame {
+                height: min(260px, var(--media-height));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="start-overlay" id="startOverlay">
+        <div class="overlay-card">
+            <div class="overlay-icon">🏪</div>
+            <div class="overlay-title">Places & Products</div>
+            <div class="overlay-text">First choose the place. Then choose what it sells. After every answer, watch the basketball shot and continue when you are ready.</div>
+            <button class="primary-btn" id="startBtn">Start Game</button>
+        </div>
+    </div>
+
+    <div class="result-overlay" id="resultOverlay">
+        <div class="overlay-card">
+            <div class="overlay-icon">🎉</div>
+            <div class="overlay-title">Great Job!</div>
+            <div class="overlay-text">Your final score is <strong id="finalScore">0</strong>.</div>
+            <button class="primary-btn" id="restartBtn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <div class="settings-header">
+                <div>
+                    <div class="settings-title" id="settingsTitle">Ayarlar</div>
+                    <div class="brand-subtitle">Sizes update live for smart boards.</div>
+                </div>
+                <button class="settings-close" id="settingsCloseBtn" type="button">×</button>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-card">
+                    <div class="setting-label"><span>Game Width</span><span class="setting-value" id="appWidthValue"></span></div>
+                    <input class="setting-input" id="appWidthInput" type="range" min="900" max="1600" step="10">
+                    <div class="setting-help">Main game area width</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Photo Width</span><span class="setting-value" id="mediaWidthValue"></span></div>
+                    <input class="setting-input" id="mediaWidthInput" type="range" min="500" max="1100" step="10">
+                    <div class="setting-help">Place photo area width</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Photo Height</span><span class="setting-value" id="mediaHeightValue"></span></div>
+                    <input class="setting-input" id="mediaHeightInput" type="range" min="260" max="700" step="10">
+                    <div class="setting-help">Place photo area height</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Answers Width</span><span class="setting-value" id="answersWidthValue"></span></div>
+                    <input class="setting-input" id="answersWidthInput" type="range" min="500" max="1100" step="10">
+                    <div class="setting-help">Answer buttons row width</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Question Size</span><span class="setting-value" id="questionSizeValue"></span></div>
+                    <input class="setting-input" id="questionSizeInput" type="range" min="1.4" max="3.2" step="0.1">
+                    <div class="setting-help">Question text size</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Answer Size</span><span class="setting-value" id="answerSizeValue"></span></div>
+                    <input class="setting-input" id="answerSizeInput" type="range" min="0.95" max="1.8" step="0.05">
+                    <div class="setting-help">Answer text size</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Shot Scene Width</span><span class="setting-value" id="shotWidthValue"></span></div>
+                    <input class="setting-input" id="shotWidthInput" type="range" min="900" max="1600" step="10">
+                    <div class="setting-help">Basketball scene width</div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label"><span>Outer Padding</span><span class="setting-value" id="paddingValue"></span></div>
+                    <input class="setting-input" id="paddingInput" type="range" min="6" max="40" step="1">
+                    <div class="setting-help">Space around the app</div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="settings-secondary" id="settingsResetBtn" type="button">Reset</button>
+                <button class="settings-primary" id="settingsDoneBtn" type="button">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="shot-overlay" id="shotOverlay" aria-hidden="true">
+        <div class="shot-panel">
+            <div class="shot-stage">
+                <div class="shot-status" id="shotStatus"></div>
+                <svg class="shot-svg" id="shotSvg" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#89d8ff"/>
+                            <stop offset="58%" stop-color="#e1f6ff"/>
+                            <stop offset="100%" stop-color="#fffdf5"/>
+                        </linearGradient>
+                        <linearGradient id="floorGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#d8a15e"/>
+                            <stop offset="100%" stop-color="#a9652b"/>
+                        </linearGradient>
+                        <linearGradient id="metalGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#5c6570"/>
+                            <stop offset="50%" stop-color="#919aa5"/>
+                            <stop offset="100%" stop-color="#606975"/>
+                        </linearGradient>
+                    </defs>
+
+                    <rect x="0" y="0" width="1200" height="675" fill="url(#skyGrad)"/>
+
+                    <g opacity="0.78">
+                        <ellipse cx="140" cy="110" rx="74" ry="28" fill="#fff"/>
+                        <ellipse cx="182" cy="95" rx="38" ry="28" fill="#fff"/>
+                        <ellipse cx="232" cy="112" rx="46" ry="24" fill="#fff"/>
+                        <ellipse cx="950" cy="92" rx="82" ry="30" fill="#fff"/>
+                        <ellipse cx="998" cy="78" rx="40" ry="30" fill="#fff"/>
+                        <ellipse cx="1048" cy="96" rx="52" ry="24" fill="#fff"/>
+                    </g>
+
+                    <g opacity="0.18">
+                        <rect x="0" y="430" width="1200" height="90" fill="#87c37a"/>
+                    </g>
+
+                    <g opacity="0.35">
+                        <rect x="0" y="420" width="1200" height="95" fill="#8a2237"/>
+                        <g fill="#203040">
+                            <path d="M0 515 L0 470 Q14 452 28 470 L28 515 Z"/>
+                            <path d="M40 515 L40 470 Q54 452 68 470 L68 515 Z"/>
+                            <path d="M84 515 L84 472 Q98 454 112 472 L112 515 Z"/>
+                            <path d="M128 515 L128 470 Q142 452 156 470 L156 515 Z"/>
+                            <path d="M170 515 L170 472 Q184 454 198 472 L198 515 Z"/>
+                            <path d="M214 515 L214 470 Q228 452 242 470 L242 515 Z"/>
+                            <path d="M258 515 L258 472 Q272 454 286 472 L286 515 Z"/>
+                            <path d="M302 515 L302 470 Q316 452 330 470 L330 515 Z"/>
+                            <path d="M346 515 L346 472 Q360 454 374 472 L374 515 Z"/>
+                            <path d="M390 515 L390 470 Q404 452 418 470 L418 515 Z"/>
+                            <path d="M434 515 L434 472 Q448 454 462 472 L462 515 Z"/>
+                            <path d="M478 515 L478 470 Q492 452 506 470 L506 515 Z"/>
+                            <path d="M522 515 L522 472 Q536 454 550 472 L550 515 Z"/>
+                            <path d="M566 515 L566 470 Q580 452 594 470 L594 515 Z"/>
+                            <path d="M610 515 L610 472 Q624 454 638 472 L638 515 Z"/>
+                            <path d="M654 515 L654 470 Q668 452 682 470 L682 515 Z"/>
+                            <path d="M698 515 L698 472 Q712 454 726 472 L726 515 Z"/>
+                            <path d="M742 515 L742 470 Q756 452 770 470 L770 515 Z"/>
+                            <path d="M786 515 L786 472 Q800 454 814 472 L814 515 Z"/>
+                            <path d="M830 515 L830 470 Q844 452 858 470 L858 515 Z"/>
+                            <path d="M874 515 L874 472 Q888 454 902 472 L902 515 Z"/>
+                            <path d="M918 515 L918 470 Q932 452 946 470 L946 515 Z"/>
+                            <path d="M962 515 L962 472 Q976 454 990 472 L990 515 Z"/>
+                            <path d="M1006 515 L1006 470 Q1020 452 1034 470 L1034 515 Z"/>
+                            <path d="M1050 515 L1050 472 Q1064 454 1078 472 L1078 515 Z"/>
+                            <path d="M1094 515 L1094 470 Q1108 452 1122 470 L1122 515 Z"/>
+                            <path d="M1138 515 L1138 472 Q1152 454 1166 472 L1166 515 Z"/>
+                        </g>
+                    </g>
+
+                    <rect x="0" y="515" width="1200" height="160" fill="url(#floorGrad)"/>
+                    <g opacity="0.1" stroke="#5a2c0e" stroke-width="4">
+                        <line x1="70" y1="515" x2="70" y2="675"/>
+                        <line x1="160" y1="515" x2="160" y2="675"/>
+                        <line x1="250" y1="515" x2="250" y2="675"/>
+                        <line x1="340" y1="515" x2="340" y2="675"/>
+                        <line x1="430" y1="515" x2="430" y2="675"/>
+                        <line x1="520" y1="515" x2="520" y2="675"/>
+                        <line x1="610" y1="515" x2="610" y2="675"/>
+                        <line x1="700" y1="515" x2="700" y2="675"/>
+                        <line x1="790" y1="515" x2="790" y2="675"/>
+                        <line x1="880" y1="515" x2="880" y2="675"/>
+                        <line x1="970" y1="515" x2="970" y2="675"/>
+                        <line x1="1060" y1="515" x2="1060" y2="675"/>
+                    </g>
+
+                    <g stroke="#fff8ef" stroke-width="7" fill="none" stroke-linecap="round">
+                        <line x1="0" y1="515" x2="1200" y2="515"/>
+                        <line x1="930" y1="515" x2="930" y2="360"/>
+                        <line x1="1200" y1="515" x2="1200" y2="360"/>
+                        <line x1="930" y1="360" x2="1200" y2="360"/>
+                        <path d="M1200 515 A235 235 0 0 0 835 312"/>
+                    </g>
+
+                    <g id="hoopSystem">
+                        <rect x="1066" y="165" width="16" height="350" rx="4" fill="url(#metalGrad)"/>
+                        <path d="M1066 208 L1010 242" stroke="url(#metalGrad)" stroke-width="14" stroke-linecap="round"/>
+                        <rect x="983" y="170" width="24" height="138" rx="3" fill="#fcfdff" stroke="#33485f" stroke-width="5"/>
+                        <rect x="949" y="224" width="48" height="34" fill="none" stroke="#f25c54" stroke-width="4"/>
+                        <line x1="929" y1="272" x2="979" y2="272" stroke="#ff6e40" stroke-width="8" stroke-linecap="round"/>
+                        <g id="netGroup" stroke="#ffffff" stroke-width="3" stroke-linecap="round">
+                            <line x1="931" y1="272" x2="937" y2="330"/>
+                            <line x1="941" y1="272" x2="945" y2="336"/>
+                            <line x1="951" y1="272" x2="953" y2="340"/>
+                            <line x1="961" y1="272" x2="961" y2="342"/>
+                            <line x1="971" y1="272" x2="969" y2="338"/>
+                            <line x1="936" y1="293" x2="968" y2="293" opacity="0.75"/>
+                            <line x1="939" y1="311" x2="965" y2="311" opacity="0.6"/>
+                            <line x1="943" y1="327" x2="962" y2="327" opacity="0.45"/>
+                        </g>
+                    </g>
+
+                    <g id="playerGroup">
+                        <ellipse cx="250" cy="532" rx="40" ry="12" fill="#6f4f2c" opacity="0.18"/>
+                        <ellipse cx="209" cy="534" rx="16" ry="6" fill="#203244" opacity="0.18"/>
+                        <ellipse cx="273" cy="533" rx="18" ry="6" fill="#203244" opacity="0.18"/>
+
+                        <path d="M199 501 L176 525 L196 525 L214 503" fill="#27384a"/>
+                        <path d="M254 501 L271 526 L292 526 L272 500" fill="#27384a"/>
+                        <rect x="198" y="487" width="12" height="18" rx="4" fill="#ffffff"/>
+                        <rect x="247" y="487" width="12" height="18" rx="4" fill="#ffffff"/>
+
+                        <line x1="207" y1="425" x2="202" y2="490" stroke="#1f3043" stroke-width="15" stroke-linecap="round"/>
+                        <line x1="229" y1="424" x2="252" y2="490" stroke="#1f3043" stroke-width="15" stroke-linecap="round"/>
+
+                        <path d="M192 403 Q216 396 242 403 L236 430 Q214 436 198 430 Z" fill="#183550"/>
+                        <path d="M194 350 Q217 338 240 350 L242 407 Q217 414 193 406 Z" fill="#f05c4a"/>
+                        <path d="M199 357 Q216 349 235 357" stroke="#ffae9e" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.65"/>
+                        <text x="217" y="394" text-anchor="middle" font-size="24" font-weight="800" fill="#ffffff">23</text>
+
+                        <rect x="209" y="341" width="11" height="16" rx="4" fill="#e6b387"/>
+
+                        <line x1="198" y1="368" x2="173" y2="392" stroke="#e8b287" stroke-width="12" stroke-linecap="round"/>
+                        <line x1="173" y1="392" x2="183" y2="416" stroke="#e8b287" stroke-width="10" stroke-linecap="round"/>
+                        <circle cx="184" cy="419" r="7" fill="#e8b287"/>
+
+                        <g id="shootArmGroup">
+                            <line x1="236" y1="366" x2="264" y2="340" stroke="#e8b287" stroke-width="13" stroke-linecap="round"/>
+                            <circle cx="264" cy="340" r="6" fill="#dc9f72"/>
+                            <line x1="264" y1="340" x2="289" y2="314" stroke="#e8b287" stroke-width="11" stroke-linecap="round"/>
+                            <circle cx="295" cy="309" r="7" fill="#e8b287"/>
+                        </g>
+
+                        <circle cx="214" cy="330" r="22" fill="#efbf93" stroke="#9a6a49" stroke-width="3"/>
+                        <circle cx="231" cy="334" r="4" fill="#e3aa7c" opacity="0.7"/>
+                        <circle cx="205" cy="332" r="2.6" fill="#2f2f2f"/>
+                        <circle cx="217" cy="332" r="2.6" fill="#2f2f2f"/>
+                        <path d="M206 343 Q213 348 221 343" stroke="#945b46" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        <path d="M192 320 Q197 300 216 298 Q236 301 240 323 Q232 315 226 313 Q219 311 213 312 Q202 313 192 320 Z" fill="#4b3026"/>
+                        <path d="M197 311 Q205 305 215 305 Q225 305 233 311" stroke="#6a4333" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    </g>
+
+                    <ellipse id="ballShadow" cx="280" cy="520" rx="20" ry="8" fill="#563315" opacity="0.22"/>
+
+                    <g id="ballGroup">
+                        <circle cx="0" cy="0" r="18" fill="#f38a22" stroke="#c86813" stroke-width="3"/>
+                        <path d="M-18 0 H18" stroke="#5e3310" stroke-width="3"/>
+                        <path d="M0 -18 V18" stroke="#5e3310" stroke-width="3"/>
+                        <path d="M-12 -13 Q0 0 -12 13" stroke="#5e3310" stroke-width="2.5" fill="none"/>
+                        <path d="M12 -13 Q0 0 12 13" stroke="#5e3310" stroke-width="2.5" fill="none"/>
+                    </g>
+                </svg>
+            </div>
+            <button class="shot-continue" id="shotContinue">Continue</button>
+        </div>
+    </div>
+
+    <div class="app">
+        <div class="topbar">
+            <div class="brand">
+                <div class="brand-badge">🏀</div>
+                <div>
+                    <div class="brand-title">Places & Products</div>
+                    <div class="brand-subtitle">Touch the correct answer</div>
+                </div>
+            </div>
+            <div class="status-row">
+                <button class="settings-btn" id="settingsBtn" type="button">Ayarlar</button>
+                <div class="pill" id="questionCount">Question 1 / 6</div>
+                <div class="pill score" id="scoreValue">Score 0</div>
+            </div>
+        </div>
+
+        <main class="game-card">
+            <div class="question-wrap">
+                <div class="step-chip place" id="stepChip">Step 1: Place</div>
+                <div class="question-title" id="questionTitle">What is this place?</div>
+                <div class="question-hint" id="questionHint">Tap the correct answer.</div>
+            </div>
+
+            <div class="media-wrap">
+                <div class="media-frame">
+                    <img class="place-image" id="placeImage" src="" alt="Place">
+                </div>
+            </div>
+
+            <div class="progress-row">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="answers-grid" id="answersGrid"></div>
+            <div class="reveal-action">
+                <button class="reveal-action-btn" id="watchShotBtn">Watch Shot</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const placesData = [
+            {
+                image: 'photos/migrossupermarket.png',
+                placeName: 'Supermarket',
+                placeOptions: ['Supermarket', 'Bookstore', 'Pharmacy', 'Bakery'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Food and Groceries',
+                productOptions: ['Food and Groceries', 'Medicine', 'Flowers', 'Books'],
+                productHint: 'Choose what this place sells.'
+            },
+            {
+                image: 'photos/ankaramodaclothesshop.png',
+                placeName: 'Clothing Store',
+                placeOptions: ['Clothing Store', 'Bakery', 'Flower Shop', 'Supermarket'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Clothes',
+                productOptions: ['Clothes', 'Bread', 'Flowers', 'Medicine'],
+                productHint: 'Choose what this place sells.'
+            },
+            {
+                image: 'photos/bookshop.png',
+                placeName: 'Bookstore',
+                placeOptions: ['Bookstore', 'Pharmacy', 'Supermarket', 'Bakery'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Books',
+                productOptions: ['Books', 'Medicine', 'Bread', 'Flowers'],
+                productHint: 'Choose what this place sells.'
+            },
+            {
+                image: 'photos/pharmacy.png',
+                placeName: 'Pharmacy',
+                placeOptions: ['Pharmacy', 'Bookstore', 'Flower Shop', 'Bakery'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Medicine',
+                productOptions: ['Medicine', 'Books', 'Bread', 'Flowers'],
+                productHint: 'Choose what this place sells.'
+            },
+            {
+                image: 'photos/florist.png',
+                placeName: 'Flower Shop',
+                placeOptions: ['Flower Shop', 'Supermarket', 'Pharmacy', 'Bookstore'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Flowers',
+                productOptions: ['Flowers', 'Food', 'Medicine', 'Books'],
+                productHint: 'Choose what this place sells.'
+            },
+            {
+                image: 'photos/bakery.png',
+                placeName: 'Bakery',
+                placeOptions: ['Bakery', 'Supermarket', 'Pharmacy', 'Flower Shop'],
+                placeHint: 'Choose the correct place.',
+                productName: 'Bread',
+                productOptions: ['Bread', 'Medicine', 'Flowers', 'Books'],
+                productHint: 'Choose what this place sells.'
+            }
+        ];
+
+        const state = {
+            places: [],
+            index: 0,
+            phase: 'place',
+            score: 0,
+            locked: false,
+            pendingAdvance: false,
+            pendingShotSuccess: null
+        };
+
+        const refs = {
+            startOverlay: document.getElementById('startOverlay'),
+            resultOverlay: document.getElementById('resultOverlay'),
+            settingsOverlay: document.getElementById('settingsOverlay'),
+            startBtn: document.getElementById('startBtn'),
+            restartBtn: document.getElementById('restartBtn'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            settingsCloseBtn: document.getElementById('settingsCloseBtn'),
+            settingsDoneBtn: document.getElementById('settingsDoneBtn'),
+            settingsResetBtn: document.getElementById('settingsResetBtn'),
+            finalScore: document.getElementById('finalScore'),
+            questionCount: document.getElementById('questionCount'),
+            scoreValue: document.getElementById('scoreValue'),
+            stepChip: document.getElementById('stepChip'),
+            questionTitle: document.getElementById('questionTitle'),
+            questionHint: document.getElementById('questionHint'),
+            placeImage: document.getElementById('placeImage'),
+            progressFill: document.getElementById('progressFill'),
+            answersGrid: document.getElementById('answersGrid'),
+            watchShotBtn: document.getElementById('watchShotBtn'),
+            appWidthInput: document.getElementById('appWidthInput'),
+            appWidthValue: document.getElementById('appWidthValue'),
+            mediaWidthInput: document.getElementById('mediaWidthInput'),
+            mediaWidthValue: document.getElementById('mediaWidthValue'),
+            mediaHeightInput: document.getElementById('mediaHeightInput'),
+            mediaHeightValue: document.getElementById('mediaHeightValue'),
+            answersWidthInput: document.getElementById('answersWidthInput'),
+            answersWidthValue: document.getElementById('answersWidthValue'),
+            questionSizeInput: document.getElementById('questionSizeInput'),
+            questionSizeValue: document.getElementById('questionSizeValue'),
+            answerSizeInput: document.getElementById('answerSizeInput'),
+            answerSizeValue: document.getElementById('answerSizeValue'),
+            shotWidthInput: document.getElementById('shotWidthInput'),
+            shotWidthValue: document.getElementById('shotWidthValue'),
+            paddingInput: document.getElementById('paddingInput'),
+            paddingValue: document.getElementById('paddingValue'),
+            shotOverlay: document.getElementById('shotOverlay'),
+            shotContinue: document.getElementById('shotContinue'),
+            shotStatus: document.getElementById('shotStatus'),
+            ballGroup: document.getElementById('ballGroup'),
+            ballShadow: document.getElementById('ballShadow'),
+            playerGroup: document.getElementById('playerGroup'),
+            shootArmGroup: document.getElementById('shootArmGroup'),
+            netGroup: document.getElementById('netGroup')
+        };
+
+        let rafId = null;
+
+        const boardSettings = {
+            '--app-max-width': { input: 'appWidthInput', value: 'appWidthValue', unit: 'px', default: 1280 },
+            '--media-max-width': { input: 'mediaWidthInput', value: 'mediaWidthValue', unit: 'px', default: 860 },
+            '--media-height': { input: 'mediaHeightInput', value: 'mediaHeightValue', unit: 'px', default: 480 },
+            '--answers-max-width': { input: 'answersWidthInput', value: 'answersWidthValue', unit: 'px', default: 860 },
+            '--question-font-size': { input: 'questionSizeInput', value: 'questionSizeValue', unit: 'rem', default: 2 },
+            '--answer-font-size': { input: 'answerSizeInput', value: 'answerSizeValue', unit: 'rem', default: 1.18 },
+            '--shot-panel-max-width': { input: 'shotWidthInput', value: 'shotWidthValue', unit: 'px', default: 1280 },
+            '--app-padding': { input: 'paddingInput', value: 'paddingValue', unit: 'px', default: 18 }
+        };
+
+        const shotPoints = {
+            start: { x: 304, y: 309 },
+            successEntry: { x: 953, y: 260 },
+            successExit: { x: 952, y: 372 },
+            missHit: { x: 924, y: 266 },
+            missEnd: { x: 1115, y: 472 }
+        };
+
+        function shuffle(array) {
+            const cloned = [...array];
+            for (let i = cloned.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+            }
+            return cloned;
+        }
+
+        function cubicBezier(p0, p1, p2, p3, t) {
+            const u = 1 - t;
+            return {
+                x: (u ** 3) * p0.x + 3 * (u ** 2) * t * p1.x + 3 * u * (t ** 2) * p2.x + (t ** 3) * p3.x,
+                y: (u ** 3) * p0.y + 3 * (u ** 2) * t * p1.y + 3 * u * (t ** 2) * p2.y + (t ** 3) * p3.y
+            };
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function easeOutCubic(t) {
+            return 1 - ((1 - t) ** 3);
+        }
+
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : 1 - (((-2 * t) + 2) ** 2) / 2;
+        }
+
+        function formatSettingValue(value, unit) {
+            if (unit === 'rem') {
+                return `${Number(value).toFixed(unit === 'rem' && Number(value) % 1 !== 0 ? 2 : 1)}${unit}`;
+            }
+            return `${value}${unit}`;
+        }
+
+        function applySetting(cssVar, rawValue) {
+            const config = boardSettings[cssVar];
+            document.documentElement.style.setProperty(cssVar, `${rawValue}${config.unit}`);
+            refs[config.value].textContent = formatSettingValue(rawValue, config.unit);
+        }
+
+        function syncSettingsInputs() {
+            Object.entries(boardSettings).forEach(([cssVar, config]) => {
+                const current = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || `${config.default}${config.unit}`;
+                const numeric = parseFloat(current);
+                refs[config.input].value = Number.isNaN(numeric) ? config.default : numeric;
+                refs[config.value].textContent = formatSettingValue(refs[config.input].value, config.unit);
+            });
+        }
+
+        function saveSettings() {
+            const saved = {};
+            Object.entries(boardSettings).forEach(([cssVar, config]) => {
+                saved[cssVar] = refs[config.input].value;
+            });
+            localStorage.setItem('eslBoardSettings', JSON.stringify(saved));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('eslBoardSettings');
+            if (!saved) {
+                syncSettingsInputs();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(saved);
+                Object.entries(boardSettings).forEach(([cssVar, config]) => {
+                    const value = parsed[cssVar] ?? config.default;
+                    refs[config.input].value = value;
+                    applySetting(cssVar, value);
+                });
+            } catch {
+                syncSettingsInputs();
+            }
+        }
+
+        function resetSettings() {
+            Object.entries(boardSettings).forEach(([cssVar, config]) => {
+                refs[config.input].value = config.default;
+                applySetting(cssVar, config.default);
+            });
+            saveSettings();
+        }
+
+        function openSettings() {
+            syncSettingsInputs();
+            refs.settingsOverlay.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            refs.settingsOverlay.style.display = 'none';
+        }
+
+        function setBallPosition(point, rotation) {
+            refs.ballGroup.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${rotation})`);
+            const shadowX = point.x;
+            const shadowScale = Math.max(0.45, Math.min(1.1, 1 - ((520 - Math.min(point.y, 520)) / 420)));
+            refs.ballShadow.setAttribute('cx', shadowX.toFixed(2));
+            refs.ballShadow.setAttribute('rx', (20 * shadowScale).toFixed(2));
+            refs.ballShadow.setAttribute('ry', (8 * shadowScale).toFixed(2));
+            refs.ballShadow.setAttribute('opacity', (0.12 + shadowScale * 0.12).toFixed(2));
+        }
+
+        function resetShotScene() {
+            refs.shotStatus.className = 'shot-status';
+            refs.shotStatus.textContent = '';
+            refs.shotContinue.classList.remove('show');
+            refs.netGroup.setAttribute('transform', 'translate(0 0) rotate(0 950 272)');
+            refs.playerGroup.setAttribute('transform', 'translate(0 0)');
+            refs.shootArmGroup.setAttribute('transform', 'rotate(0 236 366)');
+            setBallPosition(shotPoints.start, 0);
+        }
+
+        function updateScore() {
+            refs.scoreValue.textContent = `Score ${state.score}`;
+        }
+
+        function updateProgress() {
+            const completedSteps = (state.index * 2) + (state.phase === 'product' ? 1 : 0);
+            const totalSteps = state.places.length * 2;
+            refs.progressFill.style.width = `${(completedSteps / totalSteps) * 100}%`;
+        }
+
+        function renderQuestion() {
+            const item = state.places[state.index];
+            const isPlace = state.phase === 'place';
+            const options = shuffle(isPlace ? item.placeOptions : item.productOptions);
+            const correct = isPlace ? item.placeName : item.productName;
+
+            state.locked = false;
+            state.pendingShotSuccess = null;
+            refs.questionCount.textContent = `Question ${state.index + 1} / ${state.places.length}`;
+            refs.stepChip.textContent = isPlace ? 'Step 1: Place' : 'Step 2: Product';
+            refs.stepChip.className = `step-chip ${isPlace ? 'place' : 'product'}`;
+            refs.questionTitle.textContent = isPlace ? 'What is this place?' : `What does the ${item.placeName} sell?`;
+            refs.questionHint.textContent = isPlace ? item.placeHint : item.productHint;
+            refs.placeImage.src = item.image;
+            refs.answersGrid.innerHTML = '';
+            refs.watchShotBtn.classList.remove('show');
+
+            options.forEach((option) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'answer-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => handleAnswer(option, correct, btn));
+                refs.answersGrid.appendChild(btn);
+            });
+
+            updateProgress();
+        }
+
+        function lockAnswers(correctAnswer, selectedBtn, isCorrect) {
+            const buttons = refs.answersGrid.querySelectorAll('.answer-btn');
+            buttons.forEach((button) => {
+                button.classList.add('disabled');
+                if (button.textContent === correctAnswer) {
+                    button.classList.add('correct-answer');
+                }
+            });
+
+            if (isCorrect) {
+                selectedBtn.classList.add('correct');
+            } else {
+                selectedBtn.classList.add('wrong');
+            }
+        }
+
+        function handleAnswer(selected, correctAnswer, selectedBtn) {
+            if (state.locked) {
+                return;
+            }
+
+            const isCorrect = selected === correctAnswer;
+            state.locked = true;
+            lockAnswers(correctAnswer, selectedBtn, isCorrect);
+
+            if (isCorrect) {
+                state.score += 10;
+                updateScore();
+            }
+            state.pendingShotSuccess = isCorrect;
+            refs.watchShotBtn.classList.add('show');
+        }
+
+        function handleWatchShot() {
+            if (state.pendingShotSuccess === null) {
+                return;
+            }
+
+            refs.watchShotBtn.classList.remove('show');
+            openShotOverlay(state.pendingShotSuccess);
+        }
+
+        function openShotOverlay(success) {
+            resetShotScene();
+            refs.shotOverlay.style.display = 'flex';
+            refs.shotOverlay.setAttribute('aria-hidden', 'false');
+            refs.shotStatus.textContent = success ? 'SWISH! +10' : 'MISS!';
+            refs.shotStatus.className = `shot-status ${success ? 'success' : 'fail'}`;
+            refs.shotContinue.textContent = state.phase === 'place' ? 'Continue to Step 2' : (state.index === state.places.length - 1 ? 'See Result' : 'Next Place');
+            startShotAnimation(success);
+        }
+
+        function startShotAnimation(success) {
+            const startTime = performance.now();
+            const duration = 3300;
+
+            const successArcA = { x: 470, y: 88 };
+            const successArcB = { x: 760, y: 110 };
+            const dropA = { x: 953, y: 300 };
+            const dropB = { x: 953, y: 338 };
+
+            const missArcA = { x: 470, y: 80 };
+            const missArcB = { x: 745, y: 96 };
+            const missBounceA = { x: 968, y: 270 };
+            const missBounceB = { x: 1052, y: 366 };
+
+            function frame(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const jumpProgress = Math.min(progress / 0.28, 1);
+                const jump = Math.sin(jumpProgress * Math.PI) * 18;
+                const armProgress = Math.min(progress / 0.24, 1);
+                const armAngle = lerp(0, -66, easeOutCubic(armProgress));
+
+                refs.playerGroup.setAttribute('transform', `translate(0 ${-jump})`);
+                refs.shootArmGroup.setAttribute('transform', `rotate(${armAngle} 236 366)`);
+
+                let point;
+                if (success) {
+                    if (progress < 0.72) {
+                        point = cubicBezier(shotPoints.start, successArcA, successArcB, shotPoints.successEntry, easeInOutQuad(progress / 0.72));
+                    } else {
+                        const t = (progress - 0.72) / 0.28;
+                        point = cubicBezier(shotPoints.successEntry, dropA, dropB, shotPoints.successExit, easeInOutQuad(t));
+                        const sway = Math.sin(t * Math.PI * 4) * (1 - t) * 6;
+                        refs.netGroup.setAttribute('transform', `translate(${sway} 0) rotate(${sway * 0.8} 950 272)`);
+                    }
+                } else {
+                    if (progress < 0.62) {
+                        point = cubicBezier(shotPoints.start, missArcA, missArcB, shotPoints.missHit, easeInOutQuad(progress / 0.62));
+                    } else {
+                        const t = (progress - 0.62) / 0.38;
+                        point = cubicBezier(shotPoints.missHit, missBounceA, missBounceB, shotPoints.missEnd, easeInOutQuad(t));
+                    }
+                }
+
+                const rotation = progress * 920;
+                setBallPosition(point, rotation);
+
+                if (progress > 0.78) {
+                    refs.shotStatus.classList.add('show');
+                }
+
+                if (progress < 1) {
+                    rafId = requestAnimationFrame(frame);
+                } else {
+                    refs.shotContinue.classList.add('show');
+                    state.pendingAdvance = true;
+                }
+            }
+
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+            }
+            rafId = requestAnimationFrame(frame);
+        }
+
+        function advanceGame() {
+            if (!state.pendingAdvance) {
+                return;
+            }
+
+            state.pendingAdvance = false;
+            refs.shotOverlay.style.display = 'none';
+            refs.shotOverlay.setAttribute('aria-hidden', 'true');
+            refs.shotContinue.classList.remove('show');
+            refs.shotStatus.classList.remove('show');
+
+            if (state.phase === 'place') {
+                state.phase = 'product';
+            } else {
+                state.phase = 'place';
+                state.index += 1;
+            }
+
+            if (state.index >= state.places.length) {
+                refs.finalScore.textContent = state.score;
+                refs.resultOverlay.style.display = 'flex';
+                return;
+            }
+
+            renderQuestion();
+        }
+
+        function startGame() {
+            state.places = shuffle(placesData);
+            state.index = 0;
+            state.phase = 'place';
+            state.score = 0;
+            state.locked = false;
+            state.pendingAdvance = false;
+            updateScore();
+            refs.resultOverlay.style.display = 'none';
+            refs.startOverlay.style.display = 'none';
+            renderQuestion();
+        }
+
+        Object.entries(boardSettings).forEach(([cssVar, config]) => {
+            refs[config.input].addEventListener('input', (event) => {
+                applySetting(cssVar, event.target.value);
+                saveSettings();
+            });
+        });
+
+        refs.startBtn.addEventListener('click', startGame);
+        refs.restartBtn.addEventListener('click', startGame);
+        refs.watchShotBtn.addEventListener('click', handleWatchShot);
+        refs.shotContinue.addEventListener('click', advanceGame);
+        refs.settingsBtn.addEventListener('click', openSettings);
+        refs.settingsCloseBtn.addEventListener('click', closeSettings);
+        refs.settingsDoneBtn.addEventListener('click', closeSettings);
+        refs.settingsResetBtn.addEventListener('click', resetSettings);
+        refs.settingsOverlay.addEventListener('click', (event) => {
+            if (event.target === refs.settingsOverlay) {
+                closeSettings();
+            }
+        });
+
+        loadSettings();
+        resetShotScene();
+    </script>
+</body>
+</html>
